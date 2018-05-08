@@ -1,0 +1,79 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Orion</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <style>
+      body {
+        font-family: Monospace;
+        margin: 0;
+        overflow: hidden;
+      }
+      #viewport {
+        z-index: 0;
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #121212;
+      }
+      #canvas {
+        position: relative;
+        width: 100%;
+        height: auto;
+      }
+      #fps {
+        z-index: 1;
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-size: 14px;
+        text-align: right;
+        color: #f3f3f3;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="viewport"></div>
+    <div id="fps"></div>
+
+    <svg id="shapw-svg" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns="http://www.w3.org/2000/svg" height="720" width="1280" version="1.1" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" viewBox="0 0 1280 720.00001">
+      <g id="shape-group" stroke="#000" fill="none">
+        <path id="border-path" d="m899.5 360c0 143.32-116.18 259.5-259.5 259.5s-259.5-116.18-259.5-259.5 116.18-259.5 259.5-259.5 259.5 116.18 259.5 259.5z" stroke-width=".99808px"/>
+        <path id="inside-path" d="m520 194.29 64.29-34.29 77.14-7.14 74.28 27.14l58.571 42.857 2.8572 44.286-44.286 1.4286-48.571-32.857-61.429-17.143-60 7.1429-61.429 32.857-48.571-12.857-25.714 61.429 51.429 31.429 64.286-10 35.714-32.857 54.286-8.5714 60 24.286 32.857 27.143 44.29 2.86 48.57-31.43 8.57 50-17.14 52.86-51.43-7.15-68.57-12.85-61.429-31.429-65.714 20-67.143 12.857-67.143-12.857 4.2857 41.429 35.7 57.14 61.43-31.43 85.71-8.57 75.72 15.71 91.43 14.29-55.72 51.43-37.14 5.71-50-25.714-74.286 5.7143-54.286 20 67.143 30 51.44 4.29" stroke-width="1px"/>
+      </g>
+    </svg>
+    <script>
+      function getPointsFromPath(pathId, pointsCount, pointsOffset) {
+        var points = [];
+        var pathEl = document.getElementById(pathId);
+        if( !pathEl ) return points;
+
+        var pathLength = pathEl.getTotalLength();
+        var offset = Object.assign({
+          x: 10,
+          y: 10
+        }, pointsOffset);
+
+        for(var i = 0; i < pointsCount; i++) {
+          var p = pathEl.getPointAtLength(i * pathLength / pointsCount);
+          points.push({
+            x: p.x + offset.x,
+            y: p.y + offset.y
+          });
+        }
+
+        return points;
+      }
+
+      var borderPoints = getPointsFromPath('border-path', 32);
+      var insidePoints = getPointsFromPath('inside-path', 64);
+    </script>
+
+    <script type="text/javascript" src="./src/vendors/loop.js"></script>
+    <script type="text/javascript" src="./src/constelation.js"></script>
+    <script type="text/javascript" src="./src/orion.js"></script>
+  </body>
+</html>

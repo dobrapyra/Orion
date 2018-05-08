@@ -1,0 +1,224 @@
+var Constelation = function(){ this.init(); };
+Object.assign(Constelation.prototype, {
+
+  init: function() {
+    this.borderVertices = Object.assign([], borderPoints);
+    this.prepareVertices( this.borderVertices, {
+      static: true,
+      force: 60,
+    } );
+
+    this.insideVertices = Object.assign([], insidePoints);
+    this.prepareVertices( this.insideVertices, {
+      ampMin: 10,
+      ampRand: 20,
+      speedMin: .0006,
+      speedRand: .0006,
+      force: 50
+    } );
+
+    this.cursorPoint = {
+      static: true,
+      curr: {
+        x: 0,
+        y: 0
+      },
+      force: 100
+    };
+
+    this.vertices = [].concat( this.borderVertices, this.insideVertices );
+    this.vertices.push( this.cursorPoint );
+    // for(var i = 0, l = 50; i < l; i++) {
+    //   this.vertices.push({
+    //     x: 450,
+    //     y: 280,
+    //     last: { x: 0, y: 0 },
+    //     curr: { x: 0, y: 0 },
+    //     amp: {
+    //       x: Math.random() * 120 + 120,
+    //       y: Math.random() * 120 + 120
+    //     },
+    //     angle: {
+    //       x: Math.random() * 2 * Math.PI,
+    //       y: Math.random() * 2 * Math.PI
+    //     },
+    //     speed: {
+    //       x: Math.random() * .0002 + .0001,
+    //       y: Math.random() * .0002 + .0001
+    //     }
+    //   });
+    // }
+
+    this.createEdges();
+  },
+
+  prepareVertices: function(vertices, props) {
+    var static = props.static === true ? true : false;
+    var ampMin = props.ampMin !== undefined ? props.ampMin : 10;
+    var ampRand = props.ampRand !== undefined ? props.ampRand : 10;
+    var speedMin = props.speedMin || .001;
+    var speedRand = props.speedRand || .001;
+    var force = props.force || 50;
+
+    for(var i = 0, l = vertices.length; i < l; i++) {
+      var v = vertices[i];
+
+      v.last = {
+        x: v.x,
+        y: v.y
+      };
+      v.curr = {
+        x: v.x,
+        y: v.y
+      };
+
+      if( static ) {
+        v.static = true;
+      } else {
+        v.amp = {
+          x: Math.random() * ampRand + ampMin,
+          y: Math.random() * ampRand + ampMin
+        };
+        v.angle = {
+          x: Math.random() * 2 * Math.PI,
+          y: Math.random() * 2 * Math.PI
+        };
+        v.speed = {
+          x: Math.random() * speedRand + speedMin,
+          y: Math.random() * speedRand + speedMin
+        };
+      }
+
+      v.force = force;
+    }
+  },
+
+  createEdges: function() {
+    this.edges = [];
+
+    var i, j, l = this.vertices.length;
+    for(i = 0; i < l; i++) {
+      var v1 = this.vertices[i];
+
+      for(j = i + 1; j < l; j++) {
+        var v2 = this.vertices[j];
+
+        this.edges.push({
+          v1: v1,
+          v2: v2,
+          lastA: 0,
+          currA: 0,
+          force: v1.force + v2.force
+        });
+      }
+    }
+  },
+
+  update: function(delta) {
+    for(var i = 0, l = this.vertices.length; i < l; i++) {
+      var v = this.vertices[i];
+
+      if( v.static ) continue;
+
+      v.last = {
+        x: v.curr.x,
+        y: v.curr.y
+      };
+
+      v.angle.x += delta * v.speed.x;
+      v.angle.y += delta * v.speed.y;
+
+      // console.log( v.ang );
+
+      v.curr = {
+        x: v.x + v.amp.x * Math.sin(v.angle.x),
+        y: v.y + v.amp.y * Math.cos(v.angle.y)
+      };
+    }
+
+    for(var i = 0, l = this.edges.length; i < l; i++) {
+      var edge = this.edges[i];
+      var v1 = edge.v1;
+      var v2 = edge.v2;
+
+      edge.lastA = edge.currA;
+      edge.currA = 1 - Math.min(
+        Math.sqrt(
+          Math.pow(v2.curr.x - v1.curr.x, 2) +
+          Math.pow(v2.curr.y - v1.curr.y, 2)
+        ) / edge.force,
+        1
+      );
+    }
+  },
+
+  setCursor: function(x, y) {
+    this.cursorPoint.curr = {
+      x: x,
+      y: y
+    };
+  },
+
+  render: function(interp, ctx) {
+    ctx.lineCap = 'round';
+
+    // edges
+    ctx.lineWidth = 1;
+
+    for(var i = 0, l = this.edges.length; i < l; i++) {
+      var edge = this.edges[i];
+      var v1 = edge.v1;
+      var v2 = edge.v2;
+
+      ctx.strokeStyle = 'rgba(255,255,255,' + (
+        edge.lastA + ( edge.currA - edge.lastA ) * interp
+      ) + ')';
+
+      var x1, y1, x2, y2;
+
+      if( v1.static ) {
+        x1 = v1.curr.x;
+        y1 = v1.curr.y;
+      } else {
+        x1 = v1.last.x + ( v1.curr.x - v1.last.x ) * interp;
+        y1 = v1.last.y + ( v1.curr.y - v1.last.y ) * interp;
+      }
+
+      if( v2.static ) {
+        x2 = v2.curr.x;
+        y2 = v2.curr.y;
+      } else {
+        x2 = v2.last.x + ( v2.curr.x - v2.last.x ) * interp;
+        y2 = v2.last.y + ( v2.curr.y - v2.last.y ) * interp;
+      }
+
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+    }
+
+    // vertices
+    ctx.strokeStyle = 'rgb(255,255,255)';
+    ctx.lineWidth = 3;
+
+    for(var i = 0, l = this.vertices.length; i < l; i++) {
+      var v = this.vertices[i];
+      var x, y;
+
+      if( v.static ) {
+        x = v.curr.x;
+        y = v.curr.y;
+      } else {
+        x = v.last.x + ( v.curr.x - v.last.x ) * interp;
+        y = v.last.y + ( v.curr.y - v.last.y ) * interp;
+      }
+
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + 0.2, y + 0.2);
+      ctx.stroke();
+    }
+  }
+
+});
