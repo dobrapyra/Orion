@@ -1,12 +1,18 @@
-var Orion = function(){ this.init(); };
+var Orion = function(props){ this.init(props); };
 Object.assign(Orion.prototype, {
 
-  init: function() {
+  init: function(props) {
     this.fpsMeter = document.getElementById('fps');
 
     this.viewport = document.getElementById('viewport');
     this.canvas = this.createCanvas();
     this.ctx = this.canvas.getContext('2d');
+
+    this.w = props.w || 1280;
+    this.h = props.h || 720;
+
+    this.canvas.width = this.w;
+    this.canvas.height = this.h;
 
     this.refreshContext();
 
@@ -32,11 +38,7 @@ Object.assign(Orion.prototype, {
   },
 
   refreshContext: function() {
-    this.w = this.viewport.offsetWidth;
-    this.h = this.viewport.offsetHeight;
-
-    this.canvas.width = this.w;
-    this.canvas.height = this.h;
+    this.scale = Math.round( ( this.canvas.offsetWidth / this.canvas.width ) * 1e5 ) / 1e5;
   },
 
   // rawFrame: function(){
@@ -49,12 +51,22 @@ Object.assign(Orion.prototype, {
 
   bindEvents: function() {
     this.viewport.addEventListener('mousemove', this.onMouseMove.bind(this));
+    window.addEventListener('resize', this.onWinResize.bind(this));
   },
 
   onMouseMove: function(e) {
-    var x = e.pageX - this.viewport.offsetLeft;
-    var y = e.pageY - this.viewport.offsetTop;
+    var x = ( e.pageX - this.viewport.offsetLeft ) / this.scale;
+    var y = ( e.pageY - this.viewport.offsetTop ) / this.scale;
     this.constelation.setCursor(x, y);
+  },
+
+  onWinResize: function(e) {
+    clearTimeout( this.resizeTimeout );
+    this.resizeTimeout = setTimeout(this.onResizeTimeout.bind(this), 200);
+  },
+
+  onResizeTimeout: function() {
+    this.refreshContext();
   },
 
   update: function(delta) {
@@ -70,5 +82,3 @@ Object.assign(Orion.prototype, {
   }
 
 });
-
-var orion = new Orion();
