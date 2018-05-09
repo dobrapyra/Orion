@@ -10,6 +10,7 @@ Object.assign(Orion.prototype, {
 
     this.w = props.w || 1280;
     this.h = props.h || 720;
+    this.fpsShow = props.fpsShow || false;
 
     this.canvas.width = this.w;
     this.canvas.height = this.h;
@@ -21,7 +22,7 @@ Object.assign(Orion.prototype, {
       // handleRawFrame: this.rawFrame.bind(this),
       handleUpdate: this.update.bind(this),
       handleRender: this.render.bind(this),
-      fpsMeter: true
+      fpsMeter: this.fpsShow
     });
 
     this.constelation = new Constelation();
@@ -78,7 +79,9 @@ Object.assign(Orion.prototype, {
 
     this.constelation.render(interp, this.ctx);
 
-    this.fpsMeter.innerText = Math.round(fps) + ' FPS';
+    if( this.fpsShow ) {
+      this.fpsMeter.innerText = Math.round(fps) + ' FPS';
+    }
   }
 
 });

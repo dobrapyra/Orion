@@ -37,7 +37,7 @@
   </head>
   <body>
     <div id="viewport"></div>
-    <div id="fps"></div>
+    <div id="fps">FPS</div>
 
     <svg id="shapw-svg" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns="http://www.w3.org/2000/svg" height="720" width="1280" version="1.1" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" viewBox="0 0 1280 720.00001">
       <g id="shape-group" stroke="#000" fill="none">
@@ -89,7 +89,8 @@
     <script>
       var orion = new Orion({
         w: 1280,
-        h: 720
+        h: 720,
+        fpsShow: true
       });
     </script>
   </body>
