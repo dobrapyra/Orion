@@ -86,12 +86,24 @@ Object.assign(Constelation.prototype, {
       for(j = i + 1; j < l; j++) {
         var v2 = this.vertices[j];
 
+        if( v1.border && v2.border ) continue;
+
+        var static = v1.static && v2.static;
+        var force = v1.force + v2.force;
+
         this.edges.push({
           v1: v1,
           v2: v2,
           lastA: 0,
-          currA: 0,
-          force: v1.force + v2.force
+          currA: static ? ( 1 - Math.min(
+            Math.sqrt(
+              Math.pow(v2.curr.x - v1.curr.x, 2) +
+              Math.pow(v2.curr.y - v1.curr.y, 2)
+            ) / force,
+            1
+          ) ) : 0,
+          force: force,
+          static: static
         });
       }
     }
@@ -111,8 +123,6 @@ Object.assign(Constelation.prototype, {
       v.angle.x += delta * v.speed.x;
       v.angle.y += delta * v.speed.y;
 
-      // console.log( v.ang );
-
       v.curr = {
         x: v.x + v.amp.x * Math.sin(v.angle.x),
         y: v.y + v.amp.y * Math.cos(v.angle.y)
@@ -121,6 +131,9 @@ Object.assign(Constelation.prototype, {
 
     for(var i = 0, l = this.edges.length; i < l; i++) {
       var edge = this.edges[i];
+
+      if( edge.static ) continue;
+
       var v1 = edge.v1;
       var v2 = edge.v2;
 
@@ -145,8 +158,22 @@ Object.assign(Constelation.prototype, {
   render: function(interp, ctx) {
     ctx.lineCap = 'round';
 
-    // edges
+    // border
     ctx.lineWidth = 1;
+    ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+
+    var firstBorderVertex = this.borderVertices[0];
+    ctx.beginPath();
+    ctx.moveTo(firstBorderVertex.x, firstBorderVertex.y);
+    for(var i = 0, l = this.borderVertices.length; i < l; i++) {
+      var v = this.borderVertices[i];
+      ctx.lineTo(v.x, v.y);
+    }
+    ctx.closePath();
+    ctx.stroke();
+
+    // edges
+    // ctx.lineWidth = 1; // border set the same width
 
     for(var i = 0, l = this.edges.length; i < l; i++) {
       var edge = this.edges[i];
@@ -156,9 +183,13 @@ Object.assign(Constelation.prototype, {
       var v1 = edge.v1;
       var v2 = edge.v2;
 
-      ctx.strokeStyle = 'rgba(255,255,255,' + (
-        edge.lastA + ( edge.currA - edge.lastA ) * interp
-      ) + ')';
+      if( edge.static ) {
+        ctx.strokeStyle = 'rgba(255,255,255,' + edge.currA + ')';
+      } else {
+        ctx.strokeStyle = 'rgba(255,255,255,' + (
+          edge.lastA + ( edge.currA - edge.lastA ) * interp
+        ) + ')';
+      }
 
       var x1, y1, x2, y2;
 
