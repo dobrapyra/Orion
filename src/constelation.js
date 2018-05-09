@@ -4,8 +4,10 @@ Object.assign(Constelation.prototype, {
   init: function() {
     this.borderVertices = Object.assign([], borderPoints);
     this.prepareVertices( this.borderVertices, {
-      static: true,
       force: 60,
+    }, {
+      static: true,
+      border: true
     } );
 
     this.insideVertices = Object.assign([], insidePoints);
@@ -18,7 +20,6 @@ Object.assign(Constelation.prototype, {
     } );
 
     this.cursorPoint = {
-      static: true,
       curr: {
         x: 0,
         y: 0
@@ -28,32 +29,14 @@ Object.assign(Constelation.prototype, {
 
     this.vertices = [].concat( this.borderVertices, this.insideVertices );
     this.vertices.push( this.cursorPoint );
-    // for(var i = 0, l = 50; i < l; i++) {
-    //   this.vertices.push({
-    //     x: 450,
-    //     y: 280,
-    //     last: { x: 0, y: 0 },
-    //     curr: { x: 0, y: 0 },
-    //     amp: {
-    //       x: Math.random() * 120 + 120,
-    //       y: Math.random() * 120 + 120
-    //     },
-    //     angle: {
-    //       x: Math.random() * 2 * Math.PI,
-    //       y: Math.random() * 2 * Math.PI
-    //     },
-    //     speed: {
-    //       x: Math.random() * .0002 + .0001,
-    //       y: Math.random() * .0002 + .0001
-    //     }
-    //   });
-    // }
 
     this.createEdges();
+
+    this.cursorPoint.static = true; // after createEdges
   },
 
-  prepareVertices: function(vertices, props) {
-    var static = props.static === true ? true : false;
+  prepareVertices: function(vertices, props, customProps) {
+    var static = customProps && customProps.static ? true : false;
     var ampMin = props.ampMin !== undefined ? props.ampMin : 10;
     var ampRand = props.ampRand !== undefined ? props.ampRand : 10;
     var speedMin = props.speedMin || .001;
@@ -72,9 +55,7 @@ Object.assign(Constelation.prototype, {
         y: v.y
       };
 
-      if( static ) {
-        v.static = true;
-      } else {
+      if( !static ) {
         v.amp = {
           x: Math.random() * ampRand + ampMin,
           y: Math.random() * ampRand + ampMin
@@ -90,6 +71,8 @@ Object.assign(Constelation.prototype, {
       }
 
       v.force = force;
+
+      Object.assign(v, customProps);
     }
   },
 
@@ -103,12 +86,24 @@ Object.assign(Constelation.prototype, {
       for(j = i + 1; j < l; j++) {
         var v2 = this.vertices[j];
 
+        if( v1.border && v2.border ) continue;
+
+        var static = v1.static && v2.static;
+        var force = v1.force + v2.force;
+
         this.edges.push({
           v1: v1,
           v2: v2,
           lastA: 0,
-          currA: 0,
-          force: v1.force + v2.force
+          currA: static ? ( 1 - Math.min(
+            Math.sqrt(
+              Math.pow(v2.curr.x - v1.curr.x, 2) +
+              Math.pow(v2.curr.y - v1.curr.y, 2)
+            ) / force,
+            1
+          ) ) : 0,
+          force: force,
+          static: static
         });
       }
     }
@@ -128,8 +123,6 @@ Object.assign(Constelation.prototype, {
       v.angle.x += delta * v.speed.x;
       v.angle.y += delta * v.speed.y;
 
-      // console.log( v.ang );
-
       v.curr = {
         x: v.x + v.amp.x * Math.sin(v.angle.x),
         y: v.y + v.amp.y * Math.cos(v.angle.y)
@@ -138,6 +131,9 @@ Object.assign(Constelation.prototype, {
 
     for(var i = 0, l = this.edges.length; i < l; i++) {
       var edge = this.edges[i];
+
+      if( edge.static ) continue;
+
       var v1 = edge.v1;
       var v2 = edge.v2;
 
@@ -162,17 +158,38 @@ Object.assign(Constelation.prototype, {
   render: function(interp, ctx) {
     ctx.lineCap = 'round';
 
-    // edges
+    // border
     ctx.lineWidth = 1;
+    ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+
+    var firstBorderVertex = this.borderVertices[0];
+    ctx.beginPath();
+    ctx.moveTo(firstBorderVertex.x, firstBorderVertex.y);
+    for(var i = 0, l = this.borderVertices.length; i < l; i++) {
+      var v = this.borderVertices[i];
+      ctx.lineTo(v.x, v.y);
+    }
+    ctx.closePath();
+    ctx.stroke();
+
+    // edges
+    // ctx.lineWidth = 1; // border set the same width
 
     for(var i = 0, l = this.edges.length; i < l; i++) {
       var edge = this.edges[i];
+
+      if( edge.currA <= 0 ) continue;
+
       var v1 = edge.v1;
       var v2 = edge.v2;
 
-      ctx.strokeStyle = 'rgba(255,255,255,' + (
-        edge.lastA + ( edge.currA - edge.lastA ) * interp
-      ) + ')';
+      if( edge.static ) {
+        ctx.strokeStyle = 'rgba(255,255,255,' + edge.currA + ')';
+      } else {
+        ctx.strokeStyle = 'rgba(255,255,255,' + (
+          edge.lastA + ( edge.currA - edge.lastA ) * interp
+        ) + ')';
+      }
 
       var x1, y1, x2, y2;
 
