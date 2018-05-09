@@ -4,8 +4,10 @@ Object.assign(Constelation.prototype, {
   init: function() {
     this.borderVertices = Object.assign([], borderPoints);
     this.prepareVertices( this.borderVertices, {
-      static: true,
       force: 60,
+    }, {
+      static: true,
+      border: true
     } );
 
     this.insideVertices = Object.assign([], insidePoints);
@@ -18,7 +20,6 @@ Object.assign(Constelation.prototype, {
     } );
 
     this.cursorPoint = {
-      static: true,
       curr: {
         x: 0,
         y: 0
@@ -28,32 +29,14 @@ Object.assign(Constelation.prototype, {
 
     this.vertices = [].concat( this.borderVertices, this.insideVertices );
     this.vertices.push( this.cursorPoint );
-    // for(var i = 0, l = 50; i < l; i++) {
-    //   this.vertices.push({
-    //     x: 450,
-    //     y: 280,
-    //     last: { x: 0, y: 0 },
-    //     curr: { x: 0, y: 0 },
-    //     amp: {
-    //       x: Math.random() * 120 + 120,
-    //       y: Math.random() * 120 + 120
-    //     },
-    //     angle: {
-    //       x: Math.random() * 2 * Math.PI,
-    //       y: Math.random() * 2 * Math.PI
-    //     },
-    //     speed: {
-    //       x: Math.random() * .0002 + .0001,
-    //       y: Math.random() * .0002 + .0001
-    //     }
-    //   });
-    // }
 
     this.createEdges();
+
+    this.cursorPoint.static = true; // after createEdges
   },
 
-  prepareVertices: function(vertices, props) {
-    var static = props.static === true ? true : false;
+  prepareVertices: function(vertices, props, customProps) {
+    var static = customProps && customProps.static ? true : false;
     var ampMin = props.ampMin !== undefined ? props.ampMin : 10;
     var ampRand = props.ampRand !== undefined ? props.ampRand : 10;
     var speedMin = props.speedMin || .001;
@@ -72,9 +55,7 @@ Object.assign(Constelation.prototype, {
         y: v.y
       };
 
-      if( static ) {
-        v.static = true;
-      } else {
+      if( !static ) {
         v.amp = {
           x: Math.random() * ampRand + ampMin,
           y: Math.random() * ampRand + ampMin
@@ -90,6 +71,8 @@ Object.assign(Constelation.prototype, {
       }
 
       v.force = force;
+
+      Object.assign(v, customProps);
     }
   },
 
@@ -167,6 +150,9 @@ Object.assign(Constelation.prototype, {
 
     for(var i = 0, l = this.edges.length; i < l; i++) {
       var edge = this.edges[i];
+
+      if( edge.currA <= 0 ) continue;
+
       var v1 = edge.v1;
       var v2 = edge.v2;
 
