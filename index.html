@@ -87,8 +87,20 @@
       var orion = new Orion({
         viewport: document.getElementById('viewport'),
         fpsMeter: document.getElementById('fps'),
+        fpsLimit: 36,
         w: 1280,
-        h: 720
+        h: 720,
+        constellation: {
+          points: {
+            border: borderPoints,
+            inside: insidePoints
+          },
+          force: {
+            border: 40,
+            inside: 20,
+            cursor: 120
+          }
+        }
       });
     </script>
   </body>
