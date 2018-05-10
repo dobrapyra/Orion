@@ -14,6 +14,7 @@ notifyLogOnly.logLevel(1);
 gulp.task( 'buildES5', () => {
   return gulp
     .src( [
+      './src/orion/info.js',
       './src/vendors/polyfills/Object/keys.js',
       './src/vendors/polyfills/Object/assign.js',
       './src/vendors/getOffset.js',
