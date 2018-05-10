@@ -9,20 +9,17 @@
       body {
         font-family: Monospace;
         margin: 0;
-        overflow: hidden;
+      }
+      #container {
+        position: relative;
+        max-width: 1280px;
+        margin: 0 auto;
       }
       #viewport {
         z-index: 0;
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        overflow: hidden;
-        background-color: #121212;
-      }
-      #canvas {
         position: relative;
-        width: 100%;
         height: auto;
+        background-color: #121212;
       }
       #fps {
         z-index: 1;
@@ -36,8 +33,10 @@
     </style>
   </head>
   <body>
-    <div id="viewport"></div>
-    <div id="fps">FPS</div>
+    <div id="container">
+      <div id="viewport"></div>
+      <div id="fps">FPS</div>
+    </div>
 
     <svg id="shapw-svg" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns="http://www.w3.org/2000/svg" height="720" width="1280" version="1.1" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" viewBox="0 0 1280 720.00001">
       <g id="shape-group" stroke="#000" fill="none">
@@ -82,15 +81,17 @@
 
     </script>
 
+    <script type="text/javascript" src="./src/vendors/getOffset.js"></script>
     <script type="text/javascript" src="./src/vendors/loop.js"></script>
     <script type="text/javascript" src="./src/constelation.js"></script>
     <script type="text/javascript" src="./src/orion.js"></script>
 
     <script>
       var orion = new Orion({
+        viewport: document.getElementById('viewport'),
+        fpsMeter: document.getElementById('fps'),
         w: 1280,
-        h: 720,
-        fpsShow: true
+        h: 720
       });
     </script>
   </body>

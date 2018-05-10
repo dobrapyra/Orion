@@ -1,16 +1,21 @@
+/*!
+ * Orion
+ * version: 2018.05.10
+ * author: dobrapyra
+ * url: https://github.com/dobrapyra/Orion
+ */
 var Orion = function(props){ this.init(props); };
 Object.assign(Orion.prototype, {
 
   init: function(props) {
-    this.fpsMeter = document.getElementById('fps');
-
-    this.viewport = document.getElementById('viewport');
+    this.viewport = props.viewport;
     this.canvas = this.createCanvas();
     this.ctx = this.canvas.getContext('2d');
 
+    this.fpsMeter = props.fpsMeter;
+
     this.w = props.w || 1280;
     this.h = props.h || 720;
-    this.fpsShow = props.fpsShow || false;
 
     this.canvas.width = this.w;
     this.canvas.height = this.h;
@@ -22,10 +27,10 @@ Object.assign(Orion.prototype, {
       // handleRawFrame: this.rawFrame.bind(this),
       handleUpdate: this.update.bind(this),
       handleRender: this.render.bind(this),
-      fpsMeter: this.fpsShow
+      fpsMeter: !!this.fpsMeter
     });
 
-    this.constelation = new Constelation();
+    this.constellation = new OrionConstellation();
 
     this.bindEvents();
     this.loop.start();
@@ -33,22 +38,20 @@ Object.assign(Orion.prototype, {
 
   createCanvas: function() {
     var canvas = document.createElement('canvas');
-    canvas.id = 'canvas';
+    Object.assign(canvas.style, {
+      position: 'relative',
+      width: '100%',
+      height: 'auto'
+    });
+
     this.viewport.appendChild(canvas);
     return canvas;
   },
 
   refreshContext: function() {
     this.scale = Math.round( ( this.canvas.offsetWidth / this.canvas.width ) * 1e5 ) / 1e5;
+    this.viewportOffset = this.viewport.getOffset();
   },
-
-  // rawFrame: function(){
-  //   this.constelation.update(16.67);
-
-  //   this.ctx.clearRect(0, 0, this.w, this.h);
-  //   this.constelation.render(1, this.ctx);
-  //   this.fpsMeter.innerText = Math.round(fps) + ' FPS';
-  // },
 
   bindEvents: function() {
     this.viewport.addEventListener('mousemove', this.onMouseMove.bind(this));
@@ -56,9 +59,9 @@ Object.assign(Orion.prototype, {
   },
 
   onMouseMove: function(e) {
-    var x = ( e.pageX - this.viewport.offsetLeft ) / this.scale;
-    var y = ( e.pageY - this.viewport.offsetTop ) / this.scale;
-    this.constelation.setCursor(x, y);
+    var x = ( e.pageX - this.viewportOffset.l ) / this.scale;
+    var y = ( e.pageY - this.viewportOffset.t ) / this.scale;
+    this.constellation.setCursor(x, y);
   },
 
   onWinResize: function(e) {
@@ -70,16 +73,26 @@ Object.assign(Orion.prototype, {
     this.refreshContext();
   },
 
+  // rawFrame: function(){
+  //   this.constellation.update(16.67);
+
+  //   this.ctx.clearRect(0, 0, this.w, this.h);
+  //   this.constellation.render(1, this.ctx);
+  //   if( this.fpsMeter ) {
+  //     this.fpsMeter.innerText = Math.round(fps) + ' FPS';
+  //   }
+  // },
+
   update: function(delta) {
-    this.constelation.update(delta);
+    this.constellation.update(delta);
   },
 
   render: function(interp, fps) {
     this.ctx.clearRect(0, 0, this.w, this.h);
 
-    this.constelation.render(interp, this.ctx);
+    this.constellation.render(interp, this.ctx);
 
-    if( this.fpsShow ) {
+    if( this.fpsMeter ) {
       this.fpsMeter.innerText = Math.round(fps) + ' FPS';
     }
   }
