@@ -4,25 +4,30 @@
  * author: dobrapyra
  * url: https://github.com/dobrapyra/Orion
  */
-var OrionConstellation = function(){ this.init(); };
+var OrionConstellation = function(props){ this.init(props); };
 Object.assign(OrionConstellation.prototype, {
 
-  init: function() {
-    this.borderVertices = Object.assign([], borderPoints);
+  init: function(props) {
+    var points = props.points || {};
+    var force = props.force || {};
+    var amplitude = props.amplitude || {};
+    var speed = props.speed || {};
+
+    this.borderVertices = Object.assign([], points.border);
     this.prepareVertices( this.borderVertices, {
-      force: 60,
+      force: force.border || 60,
     }, {
       static: true,
       border: true
     } );
 
-    this.insideVertices = Object.assign([], insidePoints);
+    this.insideVertices = Object.assign([], points.inside);
     this.prepareVertices( this.insideVertices, {
-      ampMin: 10,
-      ampRand: 20,
-      speedMin: .0006,
-      speedRand: .0006,
-      force: 50
+      ampMin: amplitude.min,
+      ampMax: amplitude.max,
+      speedMin: speed.min,
+      speedMax: speed.max,
+      force: force.border || 40
     } );
 
     this.cursorPoint = {
@@ -30,7 +35,7 @@ Object.assign(OrionConstellation.prototype, {
         x: 0,
         y: 0
       },
-      force: 100
+      force: force.cursor || 120
     };
 
     this.vertices = [].concat( this.borderVertices, this.insideVertices );
@@ -43,10 +48,13 @@ Object.assign(OrionConstellation.prototype, {
 
   prepareVertices: function(vertices, props, customProps) {
     var static = customProps && customProps.static ? true : false;
-    var ampMin = props.ampMin !== undefined ? props.ampMin : 10;
-    var ampRand = props.ampRand !== undefined ? props.ampRand : 10;
-    var speedMin = props.speedMin || .001;
-    var speedRand = props.speedRand || .001;
+
+    var ampMin = props.ampMin !== undefined ? props.ampMin : 10; // allow 0
+    var ampRand = props.ampMax ? props.ampMax - ampMin : 0;
+
+    var speedMin = props.speedMin || .001; // not allow 0
+    var speedRand = props.speedMax ? props.speedMax - speedMin : 0;
+
     var force = props.force || 50;
 
     for(var i = 0, l = vertices.length; i < l; i++) {

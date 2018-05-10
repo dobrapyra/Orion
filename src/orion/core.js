@@ -23,14 +23,14 @@ Object.assign(Orion.prototype, {
     this.refreshContext();
 
     this.loop = new Loop({
-      fpsLimit: 33,
+      fpsLimit: props.fpsLimit || 36,
       // handleRawFrame: this.rawFrame.bind(this),
       handleUpdate: this.update.bind(this),
       handleRender: this.render.bind(this),
       fpsMeter: !!this.fpsMeter
     });
 
-    this.constellation = new OrionConstellation();
+    this.constellation = new OrionConstellation(props.constellation);
 
     this.bindEvents();
     this.loop.start();
