@@ -15,12 +15,13 @@ Element.prototype.getOffset = function( relEl, withScroll ) {
   }
   return offset;
 };
-/*!
+/**
  * GameLoop
  * version: 2018.05.10
  * author: dobrapyra
  * url: https://github.com/dobrapyra/GameLoop
  */
+/*! url: https://github.com/dobrapyra/GameLoop */
 var Loop = function(cfg){ this.init(cfg); };
 Object.assign(Loop.prototype, {
 
@@ -146,7 +147,7 @@ Object.assign(Loop.prototype, {
   }
 
 });
-/*!
+/**
  * OrionConstellation - the part of Orion
  * version: 2018.05.10
  * author: dobrapyra
@@ -395,7 +396,7 @@ Object.assign(OrionConstellation.prototype, {
   }
 
 });
-/*!
+/**
  * Orion
  * version: 2018.05.10
  * author: dobrapyra
