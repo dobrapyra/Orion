@@ -1,5 +1,11 @@
-var Constelation = function(){ this.init(); };
-Object.assign(Constelation.prototype, {
+/**
+ * OrionConstellation - the part of Orion
+ * version: 2018.05.10
+ * author: dobrapyra
+ * url: https://github.com/dobrapyra/Orion
+ */
+var OrionConstellation = function(){ this.init(); };
+Object.assign(OrionConstellation.prototype, {
 
   init: function() {
     this.borderVertices = Object.assign([], borderPoints);
@@ -109,6 +115,13 @@ Object.assign(Constelation.prototype, {
     }
   },
 
+  setCursor: function(x, y) {
+    this.cursorPoint.curr = {
+      x: x,
+      y: y
+    };
+  },
+
   update: function(delta) {
     for(var i = 0, l = this.vertices.length; i < l; i++) {
       var v = this.vertices[i];
@@ -148,13 +161,6 @@ Object.assign(Constelation.prototype, {
     }
   },
 
-  setCursor: function(x, y) {
-    this.cursorPoint.curr = {
-      x: x,
-      y: y
-    };
-  },
-
   render: function(interp, ctx) {
     ctx.lineCap = 'round';
 
@@ -182,6 +188,8 @@ Object.assign(Constelation.prototype, {
 
       var v1 = edge.v1;
       var v2 = edge.v2;
+
+      if( v1.hidden || v2.hidden ) continue;
 
       if( edge.static ) {
         ctx.strokeStyle = 'rgba(255,255,255,' + edge.currA + ')';

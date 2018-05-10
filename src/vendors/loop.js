@@ -1,3 +1,10 @@
+/**
+ * GameLoop
+ * version: 2018.05.10
+ * author: dobrapyra
+ * url: https://github.com/dobrapyra/GameLoop
+ */
+/*! url: https://github.com/dobrapyra/GameLoop */
 var Loop = function(cfg){ this.init(cfg); };
 Object.assign(Loop.prototype, {
 
