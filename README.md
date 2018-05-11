@@ -73,7 +73,11 @@ Example for all available parameters
     speed: { // speed range for inside points
       min: .0008,
       max: .0016
-    }
+    },
+    opacity: { // edge opacity
+      border: 0.5
+    },
+    onlyInside: true // only inside mode for cursor point
   }
 });
 ```
