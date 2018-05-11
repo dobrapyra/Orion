@@ -12,6 +12,7 @@ Object.assign(OrionConstellation.prototype, {
     var force = props.force || {};
     var amplitude = props.amplitude || {};
     var speed = props.speed || {};
+    var opacity = props.opacity || {};
 
     this.borderVertices = Object.assign([], points.border);
     this.prepareVertices( this.borderVertices, {
@@ -44,6 +45,10 @@ Object.assign(OrionConstellation.prototype, {
     this.createEdges();
 
     this.cursorPoint.static = true; // after createEdges
+
+    this.borderStrokeStyle = 'rgba(255,255,255,' + (
+      opacity.border !== undefined ? opacity.border : 0.5
+    ) + ')';
   },
 
   prepareVertices: function(vertices, props, customProps) {
@@ -174,7 +179,7 @@ Object.assign(OrionConstellation.prototype, {
 
     // border
     ctx.lineWidth = 1;
-    ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+    ctx.strokeStyle = this.borderStrokeStyle;
 
     var firstBorderVertex = this.borderVertices[0];
     ctx.beginPath();
