@@ -221,9 +221,11 @@ Object.assign(OrionConstellation.prototype, {
     var speed = props.speed || {};
     var opacity = props.opacity || {};
 
+    this.onlyInside = props.onlyInside || false;
+
     this.borderVertices = Object.assign([], points.border);
     this.prepareVertices( this.borderVertices, {
-      force: force.border || 60,
+      force: force.border || 60
     }, {
       static: true,
       border: true
@@ -243,6 +245,7 @@ Object.assign(OrionConstellation.prototype, {
         x: 0,
         y: 0
       },
+      hidden: this.onlyInside ? true : false,
       force: force.cursor || 120
     };
 
@@ -335,11 +338,24 @@ Object.assign(OrionConstellation.prototype, {
     }
   },
 
-  setCursor: function(x, y) {
+  setCursor: function(x, y, ctx) {
     this.cursorPoint.curr = {
       x: x,
       y: y
     };
+
+    if( !this.onlyInside || !ctx ) return;
+
+    var firstBorderVertex = this.borderVertices[0];
+    ctx.beginPath();
+    ctx.moveTo(firstBorderVertex.x, firstBorderVertex.y);
+    for(var i = 0, l = this.borderVertices.length; i < l; i++) {
+      var v = this.borderVertices[i];
+      ctx.lineTo(v.x, v.y);
+    }
+    ctx.closePath();
+
+    this.cursorPoint.hidden = !ctx.isPointInPath(x, y);
   },
 
   update: function(delta) {
@@ -451,6 +467,8 @@ Object.assign(OrionConstellation.prototype, {
       var v = this.vertices[i];
       var x, y;
 
+      if( v.hidden ) continue;
+
       if( v.static ) {
         x = v.curr.x;
         y = v.curr.y;
@@ -489,6 +507,11 @@ Object.assign(Orion.prototype, {
     this.canvas.width = this.w;
     this.canvas.height = this.h;
 
+    if( props.constellation.onlyInside ) {
+      this.offScreenCanvas = this.createOffscreenCanvas();
+      this.offscreenCtx = this.offScreenCanvas.getContext('2d');
+    }
+
     this.refreshContext();
 
     this.loop = new Loop({
@@ -517,6 +540,10 @@ Object.assign(Orion.prototype, {
     return canvas;
   },
 
+  createOffscreenCanvas: function() {
+    return document.createElement('canvas');
+  },
+
   refreshContext: function() {
     this.scale = Math.round( ( this.canvas.offsetWidth / this.canvas.width ) * 1e5 ) / 1e5;
     this.viewportOffset = this.viewport.getOffset();
@@ -530,7 +557,7 @@ Object.assign(Orion.prototype, {
   onMouseMove: function(e) {
     var x = ( e.pageX - this.viewportOffset.l ) / this.scale;
     var y = ( e.pageY - this.viewportOffset.t ) / this.scale;
-    this.constellation.setCursor(x, y);
+    this.constellation.setCursor(x, y, this.offscreenCtx);
   },
 
   onWinResize: function(e) {

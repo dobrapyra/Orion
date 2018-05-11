@@ -14,9 +14,11 @@ Object.assign(OrionConstellation.prototype, {
     var speed = props.speed || {};
     var opacity = props.opacity || {};
 
+    this.onlyInside = props.onlyInside || false;
+
     this.borderVertices = Object.assign([], points.border);
     this.prepareVertices( this.borderVertices, {
-      force: force.border || 60,
+      force: force.border || 60
     }, {
       static: true,
       border: true
@@ -36,6 +38,7 @@ Object.assign(OrionConstellation.prototype, {
         x: 0,
         y: 0
       },
+      hidden: this.onlyInside ? true : false,
       force: force.cursor || 120
     };
 
@@ -128,11 +131,24 @@ Object.assign(OrionConstellation.prototype, {
     }
   },
 
-  setCursor: function(x, y) {
+  setCursor: function(x, y, ctx) {
     this.cursorPoint.curr = {
       x: x,
       y: y
     };
+
+    if( !this.onlyInside || !ctx ) return;
+
+    var firstBorderVertex = this.borderVertices[0];
+    ctx.beginPath();
+    ctx.moveTo(firstBorderVertex.x, firstBorderVertex.y);
+    for(var i = 0, l = this.borderVertices.length; i < l; i++) {
+      var v = this.borderVertices[i];
+      ctx.lineTo(v.x, v.y);
+    }
+    ctx.closePath();
+
+    this.cursorPoint.hidden = !ctx.isPointInPath(x, y);
   },
 
   update: function(delta) {
@@ -243,6 +259,8 @@ Object.assign(OrionConstellation.prototype, {
     for(var i = 0, l = this.vertices.length; i < l; i++) {
       var v = this.vertices[i];
       var x, y;
+
+      if( v.hidden ) continue;
 
       if( v.static ) {
         x = v.curr.x;

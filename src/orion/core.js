@@ -20,6 +20,11 @@ Object.assign(Orion.prototype, {
     this.canvas.width = this.w;
     this.canvas.height = this.h;
 
+    if( props.constellation.onlyInside ) {
+      this.offScreenCanvas = this.createOffscreenCanvas();
+      this.offscreenCtx = this.offScreenCanvas.getContext('2d');
+    }
+
     this.refreshContext();
 
     this.loop = new Loop({
@@ -48,6 +53,10 @@ Object.assign(Orion.prototype, {
     return canvas;
   },
 
+  createOffscreenCanvas: function() {
+    return document.createElement('canvas');
+  },
+
   refreshContext: function() {
     this.scale = Math.round( ( this.canvas.offsetWidth / this.canvas.width ) * 1e5 ) / 1e5;
     this.viewportOffset = this.viewport.getOffset();
@@ -61,7 +70,7 @@ Object.assign(Orion.prototype, {
   onMouseMove: function(e) {
     var x = ( e.pageX - this.viewportOffset.l ) / this.scale;
     var y = ( e.pageY - this.viewportOffset.t ) / this.scale;
-    this.constellation.setCursor(x, y);
+    this.constellation.setCursor(x, y, this.offscreenCtx);
   },
 
   onWinResize: function(e) {
