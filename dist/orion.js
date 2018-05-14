@@ -324,14 +324,7 @@ Object.assign(OrionConstellation.prototype, {
     }
   },
 
-  setCursor: function(x, y, ctx) {
-    this.cursorPoint.curr = {
-      x: x,
-      y: y
-    };
-
-    if( !this.onlyInside || !ctx ) return;
-
+  setOutsideDetector: function(ctx) {
     var firstBorderVertex = this.borderVertices[0];
     ctx.beginPath();
     ctx.moveTo(firstBorderVertex.x, firstBorderVertex.y);
@@ -340,10 +333,24 @@ Object.assign(OrionConstellation.prototype, {
       ctx.lineTo(v.x, v.y);
     }
     ctx.closePath();
+  },
+
+  setCursor: function(x, y, ctx) {
+    this.cursorPoint.curr = {
+      x: x,
+      y: y
+    };
+
+    if( !this.onlyInside || !ctx ) return;
 
     this.cursorPoint.hidden = !ctx.isPointInPath(x, y);
 
+    this.checkCursorEdge(ctx);
+  },
+
+  checkCursorEdge: function(ctx) {
     var k = this.edgeTestPoints + 1;
+
     for(var i = 0, l = this.cursorEdges.length; i < l; i++) {
       var edge = this.cursorEdges[i];
 
@@ -364,7 +371,7 @@ Object.assign(OrionConstellation.prototype, {
     }
   },
 
-  update: function(delta) {
+  update: function(delta, ctx) {
     for(var i = 0, l = this.vertices.length; i < l; i++) {
       var v = this.vertices[i];
 
@@ -383,6 +390,8 @@ Object.assign(OrionConstellation.prototype, {
         y: v.y + v.amp.y * Math.cos(v.angle.y)
       };
     }
+
+    this.checkCursorEdge(ctx);
 
     for(var i = 0, l = this.edges.length; i < l; i++) {
       var edge = this.edges[i];
@@ -512,11 +521,6 @@ Object.assign(Orion.prototype, {
     this.canvas.width = this.w;
     this.canvas.height = this.h;
 
-    if( props.constellation.onlyInside ) {
-      this.offScreenCanvas = this.createOffscreenCanvas();
-      this.offscreenCtx = this.offScreenCanvas.getContext('2d');
-    }
-
     this.refresh();
 
     this.loop = new Loop({
@@ -530,6 +534,12 @@ Object.assign(Orion.prototype, {
     this.constellation = new OrionConstellation(
       this.prepareConstellation( props.constellation )
     );
+
+    if( props.constellation.onlyInside ) {
+      this.offScreenCanvas = this.createOffscreenCanvas();
+      this.offscreenCtx = this.offScreenCanvas.getContext('2d');
+      this.constellation.setOutsideDetector( this.offscreenCtx );
+    }
 
     this.bindEvents();
     this.loop.start();
@@ -616,7 +626,7 @@ Object.assign(Orion.prototype, {
   // },
 
   update: function(delta) {
-    this.constellation.update(delta);
+    this.constellation.update(delta, this.offscreenCtx);
   },
 
   render: function(interp, fps) {

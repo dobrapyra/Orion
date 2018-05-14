@@ -19,11 +19,6 @@ Object.assign(Orion.prototype, {
     this.canvas.width = this.w;
     this.canvas.height = this.h;
 
-    if( props.constellation.onlyInside ) {
-      this.offScreenCanvas = this.createOffscreenCanvas();
-      this.offscreenCtx = this.offScreenCanvas.getContext('2d');
-    }
-
     this.refresh();
 
     this.loop = new Loop({
@@ -37,6 +32,12 @@ Object.assign(Orion.prototype, {
     this.constellation = new OrionConstellation(
       this.prepareConstellation( props.constellation )
     );
+
+    if( props.constellation.onlyInside ) {
+      this.offScreenCanvas = this.createOffscreenCanvas();
+      this.offscreenCtx = this.offScreenCanvas.getContext('2d');
+      this.constellation.setOutsideDetector( this.offscreenCtx );
+    }
 
     this.bindEvents();
     this.loop.start();
@@ -123,7 +124,7 @@ Object.assign(Orion.prototype, {
   // },
 
   update: function(delta) {
-    this.constellation.update(delta);
+    this.constellation.update(delta, this.offscreenCtx);
   },
 
   render: function(interp, fps) {
