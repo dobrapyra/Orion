@@ -79,7 +79,8 @@ Example for all available parameters
     opacity: { // edge opacity
       border: 0.5
     },
-    onlyInside: true // only inside mode for cursor point
+    onlyInside: true, // only inside mode for cursor point
+    edgeTestPoints: 7 // number of points to check that the edge is outside
   }
 });
 ```

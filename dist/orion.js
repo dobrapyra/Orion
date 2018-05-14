@@ -201,6 +201,7 @@ Object.assign(OrionConstellation.prototype, {
     var opacity = props.opacity || {};
 
     this.onlyInside = props.onlyInside || false;
+    this.edgeTestPoints = props.edgeTestPoints || 7;
 
     this.borderVertices = Object.assign([], points.border);
     this.prepareVertices( this.borderVertices, {
@@ -224,6 +225,7 @@ Object.assign(OrionConstellation.prototype, {
         x: 0,
         y: 0
       },
+      cursor: true,
       hidden: this.onlyInside ? true : false,
       force: force.cursor || 120
     };
@@ -286,6 +288,7 @@ Object.assign(OrionConstellation.prototype, {
 
   createEdges: function() {
     this.edges = [];
+    this.cursorEdges = [];
 
     var i, j, l = this.vertices.length;
     for(i = 0; i < l; i++) {
@@ -294,12 +297,13 @@ Object.assign(OrionConstellation.prototype, {
       for(j = i + 1; j < l; j++) {
         var v2 = this.vertices[j];
 
+        // skip border edge in dynamic calculations
         if( v1.border && v2.border ) continue;
 
         var static = v1.static && v2.static;
         var force = v1.force + v2.force;
 
-        this.edges.push({
+        var edge = {
           v1: v1,
           v2: v2,
           lastA: 0,
@@ -312,7 +316,10 @@ Object.assign(OrionConstellation.prototype, {
           ) ) : 0,
           force: force,
           static: static
-        });
+        };
+
+        this.edges.push(edge);
+        if( v1.cursor || v2.cursor ) this.cursorEdges.push(edge);
       }
     }
   },
@@ -335,6 +342,26 @@ Object.assign(OrionConstellation.prototype, {
     ctx.closePath();
 
     this.cursorPoint.hidden = !ctx.isPointInPath(x, y);
+
+    var k = this.edgeTestPoints + 1;
+    for(var i = 0, l = this.cursorEdges.length; i < l; i++) {
+      var edge = this.cursorEdges[i];
+
+      var v1 = edge.v1.curr;
+      var v2 = edge.v2.curr;
+
+      var t = {
+        x: ( v2.x - v1.x ) / k,
+        y: ( v2.y - v1.y ) / k
+      };
+
+      for(var j = 1; j < k; j++) {
+        if( edge.hidden = !ctx.isPointInPath(
+          v1.x + ( j * t.x ),
+          v1.y + ( j * t.y )
+        ) ) break;
+      }
+    }
   },
 
   update: function(delta) {
@@ -360,7 +387,7 @@ Object.assign(OrionConstellation.prototype, {
     for(var i = 0, l = this.edges.length; i < l; i++) {
       var edge = this.edges[i];
 
-      if( edge.static ) continue;
+      if( edge.hidden || edge.static ) continue;
 
       var v1 = edge.v1;
       var v2 = edge.v2;
@@ -399,7 +426,7 @@ Object.assign(OrionConstellation.prototype, {
     for(var i = 0, l = this.edges.length; i < l; i++) {
       var edge = this.edges[i];
 
-      if( edge.currA <= 0 ) continue;
+      if( edge.hidden || edge.currA <= 0 ) continue;
 
       var v1 = edge.v1;
       var v2 = edge.v2;
@@ -551,8 +578,8 @@ Object.assign(Orion.prototype, {
 
   refresh: function() {
     this.offset = this.viewport.getBoundingClientRect();
+
     var viewportScale = this.offset.width / this.viewport.offsetWidth;
-    console.log( viewportScale );
     this.scale = Math.round( (
       ( this.canvas.offsetWidth / this.canvas.width ) * viewportScale
     ) * 1e5 ) / 1e5;
