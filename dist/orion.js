@@ -477,8 +477,10 @@ Object.assign(Orion.prototype, {
 
     this.fpsMeter = props.fpsMeter;
 
-    this.w = props.w || 1280;
-    this.h = props.h || 720;
+    this.density = props.density || 1;
+
+    this.w = ( props.w || 1280 ) * this.density;
+    this.h = ( props.h || 720 ) * this.density;
 
     this.canvas.width = this.w;
     this.canvas.height = this.h;
@@ -498,7 +500,9 @@ Object.assign(Orion.prototype, {
       fpsMeter: !!this.fpsMeter
     });
 
-    this.constellation = new OrionConstellation(props.constellation);
+    this.constellation = new OrionConstellation(
+      this.prepareConstellation( props.constellation )
+    );
 
     this.bindEvents();
     this.loop.start();
@@ -520,11 +524,37 @@ Object.assign(Orion.prototype, {
     return document.createElement('canvas');
   },
 
+  prepareConstellation: function(constellation) {
+    var points = constellation.points || {};
+
+    return Object.assign(
+      constellation,
+      {
+        points: {
+          border: this.recalcPoints(points.border),
+          inside: this.recalcPoints(points.inside),
+        }
+      }
+    );
+  },
+
+  recalcPoints: function(points) {
+    var density = this.density;
+
+    return density !== 1 ? points.map( function(point) {
+      return {
+        x: point.x * density,
+        y: point.y * density
+      };
+    } ) : points;
+  },
+
   refresh: function() {
     this.offset = this.viewport.getBoundingClientRect();
-    // const viewportScale = ( this.viewport.offsetWidth / this.offset.width );
+    var viewportScale = this.offset.width / this.viewport.offsetWidth;
+    console.log( viewportScale );
     this.scale = Math.round( (
-      this.canvas.offsetWidth / this.canvas.width
+      ( this.canvas.offsetWidth / this.canvas.width ) * viewportScale
     ) * 1e5 ) / 1e5;
   },
 

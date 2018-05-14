@@ -55,6 +55,7 @@ Example for all available parameters
   eventHandler: document.getElementById('container'), // mouse move event handler element (default the same as viewport)
   fpsMeter: document.getElementById('fps'), // FPS meter element
   fpsLimit: 36, // FPS limitation
+  density: 1, // pixel density
   w: 1280, // canvas width
   h: 720, // canvas height
   constellation: {
