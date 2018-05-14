@@ -4,7 +4,7 @@
  * author: dobrapyra
  * url: https://github.com/dobrapyra/GameLoop
  */
-/*! url: https://github.com/dobrapyra/GameLoop */
+/*! GameLoop - https://github.com/dobrapyra/GameLoop */
 var Loop = function(cfg){ this.init(cfg); };
 Object.assign(Loop.prototype, {
 

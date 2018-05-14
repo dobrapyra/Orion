@@ -1,9 +1,4 @@
-/**
- * Orion
- * version: 2018.05.10
- * author: dobrapyra
- * url: https://github.com/dobrapyra/Orion
- */
+/*! Orion - core */
 var Orion = function(props){ this.init(props); };
 Object.assign(Orion.prototype, {
 
@@ -27,9 +22,7 @@ Object.assign(Orion.prototype, {
       this.offscreenCtx = this.offScreenCanvas.getContext('2d');
     }
 
-    this.customCursorOffset = props.customCursorOffset || { x: 0, y: 0 };
-
-    this.refreshContext();
+    this.refresh();
 
     this.loop = new Loop({
       fpsLimit: props.fpsLimit || 36,
@@ -61,9 +54,12 @@ Object.assign(Orion.prototype, {
     return document.createElement('canvas');
   },
 
-  refreshContext: function() {
-    this.scale = Math.round( ( this.canvas.offsetWidth / this.canvas.width ) * 1e5 ) / 1e5;
-    this.viewportOffset = this.viewport.getOffset();
+  refresh: function() {
+    this.offset = this.viewport.getBoundingClientRect();
+    // const viewportScale = ( this.viewport.offsetWidth / this.offset.width );
+    this.scale = Math.round( (
+      this.canvas.offsetWidth / this.canvas.width
+    ) * 1e5 ) / 1e5;
   },
 
   bindEvents: function() {
@@ -72,8 +68,8 @@ Object.assign(Orion.prototype, {
   },
 
   onMouseMove: function(e) {
-    var x = ( e.pageX - this.viewportOffset.l + this.customCursorOffset.x ) / this.scale;
-    var y = ( e.pageY - this.viewportOffset.t + this.customCursorOffset.y ) / this.scale;
+    var x = ( e.pageX - this.offset.x ) / this.scale;
+    var y = ( e.pageY - this.offset.y ) / this.scale;
     this.constellation.setCursor(x, y, this.offscreenCtx);
   },
 
@@ -83,14 +79,7 @@ Object.assign(Orion.prototype, {
   },
 
   onResizeTimeout: function() {
-    this.refreshContext();
-  },
-
-  setCustomCursorOffset: function(offset) {
-    this.customCursorOffset = {
-      x: offset.x,
-      y: offset.y
-    };
+    this.refresh();
   },
 
   // rawFrame: function(){

@@ -1,9 +1,4 @@
-/**
- * OrionConstellation - the part of Orion
- * version: 2018.05.10
- * author: dobrapyra
- * url: https://github.com/dobrapyra/Orion
- */
+/*! Orion - constellation */
 var OrionConstellation = function(props){ this.init(props); };
 Object.assign(OrionConstellation.prototype, {
 

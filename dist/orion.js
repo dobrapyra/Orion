@@ -1,15 +1,16 @@
 /*!
  * Orion
- * version: 2018.05.12
+ * version: 2018.05.14
  * author: dobrapyra
  * url: https://github.com/dobrapyra/Orion
  */
+/*! Polyfills - https://github.com/dobrapyra/EasyPure */
 /**
  * Object.keys from EasyPure by dobrapyra
  * date: 2018.05.10
  * url: https://github.com/dobrapyra/EasyPure/blob/master/src/polyfills/Object/keys.js
  */
-if( !Object.keys ) {
+Object.keys || (
   Object.keys = function( obj ) {
 
     if( obj !== Object( obj ) ) throw new TypeError( 'Object.keys called on a non-object' );
@@ -21,14 +22,14 @@ if( !Object.keys ) {
     }
 
     return keysArr;
-  };
-}
+  }
+);
 /**
  * Object.assign from EasyPure by dobrapyra
  * date: 2018.05.10
  * url: https://github.com/dobrapyra/EasyPure/blob/master/src/polyfills/Object/assign.js
  */
-if( !Object.assign ) {
+Object.assign || (
   Object.assign = function( obj/*, srcObjs*/ ) {
 
     if( obj !== Object( obj ) ) throw new TypeError( 'Object.assign called on a non-object' );
@@ -54,32 +55,15 @@ if( !Object.assign ) {
     }
 
     return resultObj;
-  };
-}
-/**
- * getOffset from EasyPure by dobrapyra
- * date: 2018.05.10
- * url: https://github.com/dobrapyra/EasyPure/blob/master/src/functions/getOffset.js
- */
-Element.prototype.getOffset = function( relEl, withScroll ) {
-  var el, offset = { l: 0, t: 0 };
-  for( el = this; el && el !== relEl; el = el.offsetParent ) {
-    offset.l += el.offsetLeft;
-    offset.t += el.offsetTop;
-    if( withScroll ) {
-      offset.l -= el.scrollLeft;
-      offset.t -= el.scrollTop;
-    }
   }
-  return offset;
-};
+);
 /**
  * GameLoop
  * version: 2018.05.10
  * author: dobrapyra
  * url: https://github.com/dobrapyra/GameLoop
  */
-/*! url: https://github.com/dobrapyra/GameLoop */
+/*! GameLoop - https://github.com/dobrapyra/GameLoop */
 var Loop = function(cfg){ this.init(cfg); };
 Object.assign(Loop.prototype, {
 
@@ -205,12 +189,7 @@ Object.assign(Loop.prototype, {
   }
 
 });
-/**
- * OrionConstellation - the part of Orion
- * version: 2018.05.10
- * author: dobrapyra
- * url: https://github.com/dobrapyra/Orion
- */
+/*! Orion - constellation */
 var OrionConstellation = function(props){ this.init(props); };
 Object.assign(OrionConstellation.prototype, {
 
@@ -485,12 +464,7 @@ Object.assign(OrionConstellation.prototype, {
   }
 
 });
-/**
- * Orion
- * version: 2018.05.10
- * author: dobrapyra
- * url: https://github.com/dobrapyra/Orion
- */
+/*! Orion - core */
 var Orion = function(props){ this.init(props); };
 Object.assign(Orion.prototype, {
 
@@ -514,9 +488,7 @@ Object.assign(Orion.prototype, {
       this.offscreenCtx = this.offScreenCanvas.getContext('2d');
     }
 
-    this.customCursorOffset = props.customCursorOffset || { x: 0, y: 0 };
-
-    this.refreshContext();
+    this.refresh();
 
     this.loop = new Loop({
       fpsLimit: props.fpsLimit || 36,
@@ -548,9 +520,12 @@ Object.assign(Orion.prototype, {
     return document.createElement('canvas');
   },
 
-  refreshContext: function() {
-    this.scale = Math.round( ( this.canvas.offsetWidth / this.canvas.width ) * 1e5 ) / 1e5;
-    this.viewportOffset = this.viewport.getOffset();
+  refresh: function() {
+    this.offset = this.viewport.getBoundingClientRect();
+    // const viewportScale = ( this.viewport.offsetWidth / this.offset.width );
+    this.scale = Math.round( (
+      this.canvas.offsetWidth / this.canvas.width
+    ) * 1e5 ) / 1e5;
   },
 
   bindEvents: function() {
@@ -559,8 +534,8 @@ Object.assign(Orion.prototype, {
   },
 
   onMouseMove: function(e) {
-    var x = ( e.pageX - this.viewportOffset.l + this.customCursorOffset.x ) / this.scale;
-    var y = ( e.pageY - this.viewportOffset.t + this.customCursorOffset.y ) / this.scale;
+    var x = ( e.pageX - this.offset.x ) / this.scale;
+    var y = ( e.pageY - this.offset.y ) / this.scale;
     this.constellation.setCursor(x, y, this.offscreenCtx);
   },
 
@@ -570,14 +545,7 @@ Object.assign(Orion.prototype, {
   },
 
   onResizeTimeout: function() {
-    this.refreshContext();
-  },
-
-  setCustomCursorOffset: function(offset) {
-    this.customCursorOffset = {
-      x: offset.x,
-      y: offset.y
-    };
+    this.refresh();
   },
 
   // rawFrame: function(){

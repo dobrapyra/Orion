@@ -79,20 +79,24 @@ Example for all available parameters
       border: 0.5
     },
     onlyInside: true // only inside mode for cursor point
-  },
-  customCursorOffset: {
-    x: 0,
-    y: 0
   }
 });
 ```
 ## Extra methods
-It is the good practice to pause the animation when the viewport element is not visible for the user.
-It allows to improve the performance of the site, because the animation is high CPU/GPU demanding.
-You can deal with it by implementing your own script using inner methods of the loop.
+For using any internal methods you should create the orion instance variable. 
 ```js
 var myOrion = new Orion(/*...*/); // the instance of the Orion class
 ```
+### Refresh
+You can manualy refresh some values e.g. (viewport width, viewport offset) for correctly calculation of cursor position.
+```js
+myOrion.refresh();
+```
+### Loop stop/start
+It is the good practice to pause the animation when the viewport element is not visible for the user.
+It allows to improve the performance of the site, because the animation is high CPU/GPU demanding.
+You can deal with it by implementing your own script using inner methods of the loop.
+  
 If you want to stop the animation just call a `loop.stop` method:
 ```js
 myOrion.loop.stop();
