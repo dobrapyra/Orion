@@ -12,6 +12,8 @@ Object.assign(Orion.prototype, {
     this.canvas = this.createCanvas();
     this.ctx = this.canvas.getContext('2d');
 
+    this.eventHandler = props.eventHandler || props.viewport;
+
     this.fpsMeter = props.fpsMeter;
 
     this.w = props.w || 1280;
@@ -24,6 +26,8 @@ Object.assign(Orion.prototype, {
       this.offScreenCanvas = this.createOffscreenCanvas();
       this.offscreenCtx = this.offScreenCanvas.getContext('2d');
     }
+
+    this.customCursorOffset = props.customCursorOffset || { x: 0, y: 0 };
 
     this.refreshContext();
 
@@ -63,13 +67,13 @@ Object.assign(Orion.prototype, {
   },
 
   bindEvents: function() {
-    this.viewport.addEventListener('mousemove', this.onMouseMove.bind(this));
+    this.eventHandler.addEventListener('mousemove', this.onMouseMove.bind(this));
     window.addEventListener('resize', this.onWinResize.bind(this));
   },
 
   onMouseMove: function(e) {
-    var x = ( e.pageX - this.viewportOffset.l ) / this.scale;
-    var y = ( e.pageY - this.viewportOffset.t ) / this.scale;
+    var x = ( e.pageX - this.viewportOffset.l + this.customCursorOffset.x ) / this.scale;
+    var y = ( e.pageY - this.viewportOffset.t + this.customCursorOffset.y ) / this.scale;
     this.constellation.setCursor(x, y, this.offscreenCtx);
   },
 
@@ -80,6 +84,13 @@ Object.assign(Orion.prototype, {
 
   onResizeTimeout: function() {
     this.refreshContext();
+  },
+
+  setCustomCursorOffset: function(offset) {
+    this.customCursorOffset = {
+      x: offset.x,
+      y: offset.y
+    };
   },
 
   // rawFrame: function(){

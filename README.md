@@ -52,6 +52,7 @@ Example for all available parameters
 ```js
 {
   viewport: document.getElementById('viewport'), // main viewport element
+  eventHandler: document.getElementById('container'), // mouse move event handler element (default the same as viewport)
   fpsMeter: document.getElementById('fps'), // FPS meter element
   fpsLimit: 36, // FPS limitation
   w: 1280, // canvas width
@@ -78,6 +79,10 @@ Example for all available parameters
       border: 0.5
     },
     onlyInside: true // only inside mode for cursor point
+  },
+  customCursorOffset: {
+    x: 0,
+    y: 0
   }
 });
 ```
