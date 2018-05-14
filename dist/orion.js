@@ -1,15 +1,16 @@
 /*!
  * Orion
- * version: 2018.05.12
+ * version: 2018.05.14
  * author: dobrapyra
  * url: https://github.com/dobrapyra/Orion
  */
+/*! Polyfills - https://github.com/dobrapyra/EasyPure */
 /**
  * Object.keys from EasyPure by dobrapyra
  * date: 2018.05.10
  * url: https://github.com/dobrapyra/EasyPure/blob/master/src/polyfills/Object/keys.js
  */
-if( !Object.keys ) {
+Object.keys || (
   Object.keys = function( obj ) {
 
     if( obj !== Object( obj ) ) throw new TypeError( 'Object.keys called on a non-object' );
@@ -21,14 +22,14 @@ if( !Object.keys ) {
     }
 
     return keysArr;
-  };
-}
+  }
+);
 /**
  * Object.assign from EasyPure by dobrapyra
  * date: 2018.05.10
  * url: https://github.com/dobrapyra/EasyPure/blob/master/src/polyfills/Object/assign.js
  */
-if( !Object.assign ) {
+Object.assign || (
   Object.assign = function( obj/*, srcObjs*/ ) {
 
     if( obj !== Object( obj ) ) throw new TypeError( 'Object.assign called on a non-object' );
@@ -54,32 +55,15 @@ if( !Object.assign ) {
     }
 
     return resultObj;
-  };
-}
-/**
- * getOffset from EasyPure by dobrapyra
- * date: 2018.05.10
- * url: https://github.com/dobrapyra/EasyPure/blob/master/src/functions/getOffset.js
- */
-Element.prototype.getOffset = function( relEl, withScroll ) {
-  var el, offset = { l: 0, t: 0 };
-  for( el = this; el && el !== relEl; el = el.offsetParent ) {
-    offset.l += el.offsetLeft;
-    offset.t += el.offsetTop;
-    if( withScroll ) {
-      offset.l -= el.scrollLeft;
-      offset.t -= el.scrollTop;
-    }
   }
-  return offset;
-};
+);
 /**
  * GameLoop
  * version: 2018.05.10
  * author: dobrapyra
  * url: https://github.com/dobrapyra/GameLoop
  */
-/*! url: https://github.com/dobrapyra/GameLoop */
+/*! GameLoop - https://github.com/dobrapyra/GameLoop */
 var Loop = function(cfg){ this.init(cfg); };
 Object.assign(Loop.prototype, {
 
@@ -205,12 +189,7 @@ Object.assign(Loop.prototype, {
   }
 
 });
-/**
- * OrionConstellation - the part of Orion
- * version: 2018.05.10
- * author: dobrapyra
- * url: https://github.com/dobrapyra/Orion
- */
+/*! Orion - constellation */
 var OrionConstellation = function(props){ this.init(props); };
 Object.assign(OrionConstellation.prototype, {
 
@@ -222,6 +201,7 @@ Object.assign(OrionConstellation.prototype, {
     var opacity = props.opacity || {};
 
     this.onlyInside = props.onlyInside || false;
+    this.edgeTestPoints = props.edgeTestPoints || 7;
 
     this.borderVertices = Object.assign([], points.border);
     this.prepareVertices( this.borderVertices, {
@@ -245,6 +225,7 @@ Object.assign(OrionConstellation.prototype, {
         x: 0,
         y: 0
       },
+      cursor: true,
       hidden: this.onlyInside ? true : false,
       force: force.cursor || 120
     };
@@ -307,6 +288,7 @@ Object.assign(OrionConstellation.prototype, {
 
   createEdges: function() {
     this.edges = [];
+    this.cursorEdges = [];
 
     var i, j, l = this.vertices.length;
     for(i = 0; i < l; i++) {
@@ -315,12 +297,13 @@ Object.assign(OrionConstellation.prototype, {
       for(j = i + 1; j < l; j++) {
         var v2 = this.vertices[j];
 
+        // skip border edge in dynamic calculations
         if( v1.border && v2.border ) continue;
 
         var static = v1.static && v2.static;
         var force = v1.force + v2.force;
 
-        this.edges.push({
+        var edge = {
           v1: v1,
           v2: v2,
           lastA: 0,
@@ -333,9 +316,23 @@ Object.assign(OrionConstellation.prototype, {
           ) ) : 0,
           force: force,
           static: static
-        });
+        };
+
+        this.edges.push(edge);
+        if( v1.cursor || v2.cursor ) this.cursorEdges.push(edge);
       }
     }
+  },
+
+  setOutsideDetector: function(ctx) {
+    var firstBorderVertex = this.borderVertices[0];
+    ctx.beginPath();
+    ctx.moveTo(firstBorderVertex.x, firstBorderVertex.y);
+    for(var i = 0, l = this.borderVertices.length; i < l; i++) {
+      var v = this.borderVertices[i];
+      ctx.lineTo(v.x, v.y);
+    }
+    ctx.closePath();
   },
 
   setCursor: function(x, y, ctx) {
@@ -346,19 +343,35 @@ Object.assign(OrionConstellation.prototype, {
 
     if( !this.onlyInside || !ctx ) return;
 
-    var firstBorderVertex = this.borderVertices[0];
-    ctx.beginPath();
-    ctx.moveTo(firstBorderVertex.x, firstBorderVertex.y);
-    for(var i = 0, l = this.borderVertices.length; i < l; i++) {
-      var v = this.borderVertices[i];
-      ctx.lineTo(v.x, v.y);
-    }
-    ctx.closePath();
-
     this.cursorPoint.hidden = !ctx.isPointInPath(x, y);
+
+    this.checkCursorEdge(ctx);
   },
 
-  update: function(delta) {
+  checkCursorEdge: function(ctx) {
+    var k = this.edgeTestPoints + 1;
+
+    for(var i = 0, l = this.cursorEdges.length; i < l; i++) {
+      var edge = this.cursorEdges[i];
+
+      var v1 = edge.v1.curr;
+      var v2 = edge.v2.curr;
+
+      var t = {
+        x: ( v2.x - v1.x ) / k,
+        y: ( v2.y - v1.y ) / k
+      };
+
+      for(var j = 1; j < k; j++) {
+        if( edge.hidden = !ctx.isPointInPath(
+          v1.x + ( j * t.x ),
+          v1.y + ( j * t.y )
+        ) ) break;
+      }
+    }
+  },
+
+  update: function(delta, ctx) {
     for(var i = 0, l = this.vertices.length; i < l; i++) {
       var v = this.vertices[i];
 
@@ -378,10 +391,12 @@ Object.assign(OrionConstellation.prototype, {
       };
     }
 
+    this.checkCursorEdge(ctx);
+
     for(var i = 0, l = this.edges.length; i < l; i++) {
       var edge = this.edges[i];
 
-      if( edge.static ) continue;
+      if( edge.hidden || edge.static ) continue;
 
       var v1 = edge.v1;
       var v2 = edge.v2;
@@ -420,7 +435,7 @@ Object.assign(OrionConstellation.prototype, {
     for(var i = 0, l = this.edges.length; i < l; i++) {
       var edge = this.edges[i];
 
-      if( edge.currA <= 0 ) continue;
+      if( edge.hidden || edge.currA <= 0 ) continue;
 
       var v1 = edge.v1;
       var v2 = edge.v2;
@@ -485,12 +500,7 @@ Object.assign(OrionConstellation.prototype, {
   }
 
 });
-/**
- * Orion
- * version: 2018.05.10
- * author: dobrapyra
- * url: https://github.com/dobrapyra/Orion
- */
+/*! Orion - core */
 var Orion = function(props){ this.init(props); };
 Object.assign(Orion.prototype, {
 
@@ -499,20 +509,19 @@ Object.assign(Orion.prototype, {
     this.canvas = this.createCanvas();
     this.ctx = this.canvas.getContext('2d');
 
+    this.eventHandler = props.eventHandler || props.viewport;
+
     this.fpsMeter = props.fpsMeter;
 
-    this.w = props.w || 1280;
-    this.h = props.h || 720;
+    this.density = props.density || 1;
+
+    this.w = ( props.w || 1280 ) * this.density;
+    this.h = ( props.h || 720 ) * this.density;
 
     this.canvas.width = this.w;
     this.canvas.height = this.h;
 
-    if( props.constellation.onlyInside ) {
-      this.offScreenCanvas = this.createOffscreenCanvas();
-      this.offscreenCtx = this.offScreenCanvas.getContext('2d');
-    }
-
-    this.refreshContext();
+    this.refresh();
 
     this.loop = new Loop({
       fpsLimit: props.fpsLimit || 36,
@@ -522,7 +531,15 @@ Object.assign(Orion.prototype, {
       fpsMeter: !!this.fpsMeter
     });
 
-    this.constellation = new OrionConstellation(props.constellation);
+    this.constellation = new OrionConstellation(
+      this.prepareConstellation( props.constellation )
+    );
+
+    if( props.constellation.onlyInside ) {
+      this.offScreenCanvas = this.createOffscreenCanvas();
+      this.offscreenCtx = this.offScreenCanvas.getContext('2d');
+      this.constellation.setOutsideDetector( this.offscreenCtx );
+    }
 
     this.bindEvents();
     this.loop.start();
@@ -544,19 +561,48 @@ Object.assign(Orion.prototype, {
     return document.createElement('canvas');
   },
 
-  refreshContext: function() {
-    this.scale = Math.round( ( this.canvas.offsetWidth / this.canvas.width ) * 1e5 ) / 1e5;
-    this.viewportOffset = this.viewport.getOffset();
+  prepareConstellation: function(constellation) {
+    var points = constellation.points || {};
+
+    return Object.assign(
+      constellation,
+      {
+        points: {
+          border: this.recalcPoints(points.border),
+          inside: this.recalcPoints(points.inside),
+        }
+      }
+    );
+  },
+
+  recalcPoints: function(points) {
+    var density = this.density;
+
+    return density !== 1 ? points.map( function(point) {
+      return {
+        x: point.x * density,
+        y: point.y * density
+      };
+    } ) : points;
+  },
+
+  refresh: function() {
+    this.offset = this.viewport.getBoundingClientRect();
+
+    var viewportScale = this.offset.width / this.viewport.offsetWidth;
+    this.scale = Math.round( (
+      ( this.canvas.offsetWidth / this.canvas.width ) * viewportScale
+    ) * 1e5 ) / 1e5;
   },
 
   bindEvents: function() {
-    this.viewport.addEventListener('mousemove', this.onMouseMove.bind(this));
+    this.eventHandler.addEventListener('mousemove', this.onMouseMove.bind(this));
     window.addEventListener('resize', this.onWinResize.bind(this));
   },
 
   onMouseMove: function(e) {
-    var x = ( e.pageX - this.viewportOffset.l ) / this.scale;
-    var y = ( e.pageY - this.viewportOffset.t ) / this.scale;
+    var x = ( e.pageX - this.offset.x ) / this.scale;
+    var y = ( e.pageY - this.offset.y ) / this.scale;
     this.constellation.setCursor(x, y, this.offscreenCtx);
   },
 
@@ -566,7 +612,7 @@ Object.assign(Orion.prototype, {
   },
 
   onResizeTimeout: function() {
-    this.refreshContext();
+    this.refresh();
   },
 
   // rawFrame: function(){
@@ -580,7 +626,7 @@ Object.assign(Orion.prototype, {
   // },
 
   update: function(delta) {
-    this.constellation.update(delta);
+    this.constellation.update(delta, this.offscreenCtx);
   },
 
   render: function(interp, fps) {

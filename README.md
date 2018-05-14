@@ -52,8 +52,10 @@ Example for all available parameters
 ```js
 {
   viewport: document.getElementById('viewport'), // main viewport element
+  eventHandler: document.getElementById('container'), // mouse move event handler element (default the same as viewport)
   fpsMeter: document.getElementById('fps'), // FPS meter element
   fpsLimit: 36, // FPS limitation
+  density: 1, // pixel density
   w: 1280, // canvas width
   h: 720, // canvas height
   constellation: {
@@ -77,17 +79,26 @@ Example for all available parameters
     opacity: { // edge opacity
       border: 0.5
     },
-    onlyInside: true // only inside mode for cursor point
+    onlyInside: true, // only inside mode for cursor point
+    edgeTestPoints: 7 // number of points to check that the edge is outside
   }
 });
 ```
 ## Extra methods
-It is the good practice to pause the animation when the viewport element is not visible for the user.
-It allows to improve the performance of the site, because the animation is high CPU/GPU demanding.
-You can deal with it by implementing your own script using inner methods of the loop.
+For using any internal methods you should create the orion instance variable. 
 ```js
 var myOrion = new Orion(/*...*/); // the instance of the Orion class
 ```
+### Refresh
+You can manualy refresh some values e.g. (viewport width, viewport offset) for correctly calculation of cursor position.
+```js
+myOrion.refresh();
+```
+### Loop stop/start
+It is the good practice to pause the animation when the viewport element is not visible for the user.
+It allows to improve the performance of the site, because the animation is high CPU/GPU demanding.
+You can deal with it by implementing your own script using inner methods of the loop.
+  
 If you want to stop the animation just call a `loop.stop` method:
 ```js
 myOrion.loop.stop();

@@ -3,7 +3,7 @@
  * date: 2018.05.10
  * url: https://github.com/dobrapyra/EasyPure/blob/master/src/polyfills/Object/assign.js
  */
-if( !Object.assign ) {
+Object.assign || (
   Object.assign = function( obj/*, srcObjs*/ ) {
 
     if( obj !== Object( obj ) ) throw new TypeError( 'Object.assign called on a non-object' );
@@ -29,5 +29,5 @@ if( !Object.assign ) {
     }
 
     return resultObj;
-  };
-}
+  }
+);
