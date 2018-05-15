@@ -202,6 +202,7 @@ Object.assign(OrionConstellation.prototype, {
     var speed = constellation.speed || {};
     var opacity = constellation.opacity || {};
     var lineWidth = constellation.lineWidth || {};
+    var dotSize = constellation.dotSize || {};
 
     var density = this.density = props.density || 1;
 
@@ -214,7 +215,8 @@ Object.assign(OrionConstellation.prototype, {
 
     this.borderVertices = Object.assign( [], this.recalcPoints(points.border) );
     this.prepareVertices( this.borderVertices, {
-      force: ( force.border || 60 ) * density
+      force: ( force.border || 60 ) * density,
+      dotSize: ( dotSize.border || 3 ) / 2 * density
     }, {
       static: true,
       border: true
@@ -226,7 +228,8 @@ Object.assign(OrionConstellation.prototype, {
       ampMax: amplitude.max * density,
       speedMin: speed.min,
       speedMax: speed.max,
-      force: ( force.inside || 40 ) * density
+      force: ( force.inside || 40 ) * density,
+      dotSize: ( dotSize.inside || 3 ) / 2 * density
     } );
 
     this.cursorPoint = {
@@ -236,7 +239,8 @@ Object.assign(OrionConstellation.prototype, {
       },
       cursor: true,
       hidden: this.onlyInside ? true : false,
-      force: ( force.cursor || 120 ) * density
+      force: ( force.cursor || 120 ) * density,
+      dotSize: ( dotSize.cursor || 3 ) / 2 * density
     };
 
     this.vertices = [].concat( this.borderVertices, this.insideVertices );
@@ -277,6 +281,7 @@ Object.assign(OrionConstellation.prototype, {
     var speedRand = props.speedMax ? props.speedMax - speedMin : 0;
 
     var force = props.force || 50;
+    var dotSize = props.dotSize || 3;
 
     for(var i = 0, l = vertices.length; i < l; i++) {
       var v = vertices[i];
@@ -306,6 +311,7 @@ Object.assign(OrionConstellation.prototype, {
       }
 
       v.force = force;
+      v.dotSize = dotSize;
 
       Object.assign(v, customProps);
     }
@@ -503,8 +509,8 @@ Object.assign(OrionConstellation.prototype, {
     }
 
     // vertices
-    ctx.strokeStyle = 'rgb(255,255,255)';
-    ctx.lineWidth = 3;
+    ctx.fillStyle = 'rgb(255,255,255)';
+    var PI2 = 2 * Math.PI;
 
     for(var i = 0, l = this.vertices.length; i < l; i++) {
       var v = this.vertices[i];
@@ -521,9 +527,8 @@ Object.assign(OrionConstellation.prototype, {
       }
 
       ctx.beginPath();
-      ctx.moveTo(x, y);
-      ctx.lineTo(x + 0.2, y + 0.2);
-      ctx.stroke();
+      ctx.arc(x, y, v.dotSize, 0, PI2);
+      ctx.fill();
     }
   }
 

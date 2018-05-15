@@ -81,6 +81,11 @@ Example for all available parameters
       border: 1,
       inside: 1
     },
+    dotSize: { // size of points
+      border: 3,
+      inside: 3,
+      cursor: 3
+    },
     opacity: { // edge opacity
       border: 0.5
     },
