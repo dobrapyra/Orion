@@ -546,8 +546,6 @@ Object.assign(Orion.prototype, {
 
     this.fpsMeter = props.fpsMeter || null;
 
-    this.fixed = props.fixed || false;
-
     var density = props.density || 1;
 
     this.w = ( props.w || 1280 ) * density;
@@ -600,14 +598,11 @@ Object.assign(Orion.prototype, {
   refresh: function() {
     this.offset = this.viewport.getBoundingClientRect();
 
-    this.scroll = this.fixed ? {
+    this.scroll = {
       top: window.scrollY || window.pageYOffset ||
         document.body.scrollTop || document.documentElement.scrollTop || 0,
       left: window.scrollX || window.pageXOffset ||
         document.body.scrollLeft || document.documentElement.scrollLeft || 0
-    } : {
-      top: 0,
-      left: 0
     };
 
     var viewportScale = this.offset.width / this.viewport.offsetWidth;

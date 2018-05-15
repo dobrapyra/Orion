@@ -58,7 +58,6 @@ Example for all available parameters
   density: 1, // pixel density
   w: 1280, // canvas width
   h: 720, // canvas height
-  fixed: true, // if viewport is inside fixed element
   constellation: {
     points: {
       border: borderPoints, // border points - array of objects like {x,y}
