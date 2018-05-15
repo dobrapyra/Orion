@@ -99,8 +99,8 @@ Object.assign(Orion.prototype, {
   },
 
   onMouseMove: function(e) {
-    var x = ( e.pageX - this.offset.x ) / this.scale;
-    var y = ( e.pageY - this.offset.y ) / this.scale;
+    var x = ( e.pageX - this.offset.left ) / this.scale;
+    var y = ( e.pageY - this.offset.top ) / this.scale;
     this.constellation.setCursor(x, y, this.offscreenCtx);
   },
 
