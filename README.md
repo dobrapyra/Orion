@@ -76,6 +76,10 @@ Example for all available parameters
       min: .0008,
       max: .0016
     },
+    lineWidth: { // edge line width
+      border: 1,
+      inside: 1
+    },
     opacity: { // edge opacity
       border: 0.5
     },
