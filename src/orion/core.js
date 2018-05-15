@@ -9,29 +9,30 @@ Object.assign(Orion.prototype, {
 
     this.eventHandler = props.eventHandler || props.viewport;
 
-    this.fpsMeter = props.fpsMeter;
+    this.fpsMeter = props.fpsMeter || null;
 
-    this.density = props.density || 1;
+    var density = props.density || 1;
 
-    this.w = ( props.w || 1280 ) * this.density;
-    this.h = ( props.h || 720 ) * this.density;
+    this.w = ( props.w || 1280 ) * density;
+    this.h = ( props.h || 720 ) * density;
 
     this.canvas.width = this.w;
     this.canvas.height = this.h;
 
     this.refresh();
 
-    this.loop = new Loop({
+    this.loop = new Loop( {
       fpsLimit: props.fpsLimit || 36,
       // handleRawFrame: this.rawFrame.bind(this),
       handleUpdate: this.update.bind(this),
       handleRender: this.render.bind(this),
       fpsMeter: !!this.fpsMeter
-    });
+    } );
 
-    this.constellation = new OrionConstellation(
-      this.prepareConstellation( props.constellation )
-    );
+    this.constellation = new OrionConstellation( {
+      constellation: props.constellation,
+      density: density
+    } );
 
     if( props.constellation.onlyInside ) {
       this.offScreenCanvas = this.createOffscreenCanvas();
@@ -59,33 +60,15 @@ Object.assign(Orion.prototype, {
     return document.createElement('canvas');
   },
 
-  prepareConstellation: function(constellation) {
-    var points = constellation.points || {};
-
-    return Object.assign(
-      constellation,
-      {
-        points: {
-          border: this.recalcPoints(points.border),
-          inside: this.recalcPoints(points.inside),
-        }
-      }
-    );
-  },
-
-  recalcPoints: function(points) {
-    var density = this.density;
-
-    return density !== 1 ? points.map( function(point) {
-      return {
-        x: point.x * density,
-        y: point.y * density
-      };
-    } ) : points;
-  },
-
   refresh: function() {
     this.offset = this.viewport.getBoundingClientRect();
+
+    this.scroll = {
+      top: window.scrollY || window.pageYOffset ||
+        document.body.scrollTop || document.documentElement.scrollTop || 0,
+      left: window.scrollX || window.pageXOffset ||
+        document.body.scrollLeft || document.documentElement.scrollLeft || 0
+    };
 
     var viewportScale = this.offset.width / this.viewport.offsetWidth;
     this.scale = Math.round( (
@@ -95,21 +78,22 @@ Object.assign(Orion.prototype, {
 
   bindEvents: function() {
     this.eventHandler.addEventListener('mousemove', this.onMouseMove.bind(this));
-    window.addEventListener('resize', this.onWinResize.bind(this));
+    window.addEventListener('resize', this.callRefresh.bind(this));
+    document.addEventListener('scroll', this.callRefresh.bind(this));
   },
 
   onMouseMove: function(e) {
-    var x = ( e.pageX - this.offset.x ) / this.scale;
-    var y = ( e.pageY - this.offset.y ) / this.scale;
+    var x = ( e.pageX - this.offset.left - this.scroll.left ) / this.scale;
+    var y = ( e.pageY - this.offset.top - this.scroll.top ) / this.scale;
     this.constellation.setCursor(x, y, this.offscreenCtx);
   },
 
-  onWinResize: function(e) {
-    clearTimeout( this.resizeTimeout );
-    this.resizeTimeout = setTimeout(this.onResizeTimeout.bind(this), 200);
+  callRefresh: function(e) {
+    clearTimeout( this.refresfTimeout );
+    this.refresfTimeout = setTimeout(this.onRefreshTimeout.bind(this), 100);
   },
 
-  onResizeTimeout: function() {
+  onRefreshTimeout: function() {
     this.refresh();
   },
 

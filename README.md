@@ -76,11 +76,24 @@ Example for all available parameters
       min: .0008,
       max: .0016
     },
+    lineWidth: { // edge line width
+      border: 1,
+      inside: 1
+    },
+    dotSize: { // size of points
+      border: 3,
+      inside: 3,
+      cursor: 3
+    },
     opacity: { // edge opacity
       border: 0.5
     },
     onlyInside: true, // only inside mode for cursor point
-    edgeTestPoints: 7 // number of points to check that the edge is outside
+    outsideDetect: { // number of points to check that the edge is outside
+      border: 3,
+      inside: 5,
+      cursor: 9
+    }
   }
 });
 ```
