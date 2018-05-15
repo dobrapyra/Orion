@@ -539,7 +539,9 @@ Object.assign(Orion.prototype, {
 
     this.eventHandler = props.eventHandler || props.viewport;
 
-    this.fpsMeter = props.fpsMeter;
+    this.fpsMeter = props.fpsMeter || null;
+
+    this.fixed = props.fixed || false;
 
     var density = props.density || 1;
 
@@ -593,6 +595,16 @@ Object.assign(Orion.prototype, {
   refresh: function() {
     this.offset = this.viewport.getBoundingClientRect();
 
+    this.scroll = this.fixed ? {
+      top: window.scrollY || window.pageYOffset ||
+        document.body.scrollTop || document.documentElement.scrollTop || 0,
+      left: window.scrollX || window.pageXOffset ||
+        document.body.scrollLeft || document.documentElement.scrollLeft || 0
+    } : {
+      top: 0,
+      left: 0
+    };
+
     var viewportScale = this.offset.width / this.viewport.offsetWidth;
     this.scale = Math.round( (
       ( this.canvas.offsetWidth / this.canvas.width ) * viewportScale
@@ -601,21 +613,22 @@ Object.assign(Orion.prototype, {
 
   bindEvents: function() {
     this.eventHandler.addEventListener('mousemove', this.onMouseMove.bind(this));
-    window.addEventListener('resize', this.onWinResize.bind(this));
+    window.addEventListener('resize', this.callRefresh.bind(this));
+    document.addEventListener('scroll', this.callRefresh.bind(this));
   },
 
   onMouseMove: function(e) {
-    var x = ( e.pageX - this.offset.left ) / this.scale;
-    var y = ( e.pageY - this.offset.top ) / this.scale;
+    var x = ( e.pageX - this.offset.left - this.scroll.left ) / this.scale;
+    var y = ( e.pageY - this.offset.top - this.scroll.top ) / this.scale;
     this.constellation.setCursor(x, y, this.offscreenCtx);
   },
 
-  onWinResize: function(e) {
-    clearTimeout( this.resizeTimeout );
-    this.resizeTimeout = setTimeout(this.onResizeTimeout.bind(this), 200);
+  callRefresh: function(e) {
+    clearTimeout( this.refresfTimeout );
+    this.refresfTimeout = setTimeout(this.onRefreshTimeout.bind(this), 100);
   },
 
-  onResizeTimeout: function() {
+  onRefreshTimeout: function() {
     this.refresh();
   },
 
