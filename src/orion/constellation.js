@@ -15,7 +15,11 @@ Object.assign(OrionConstellation.prototype, {
     var density = this.density = props.density || 1;
 
     this.onlyInside = constellation.onlyInside || false;
-    this.edgeTestPoints = constellation.edgeTestPoints || 7;
+    this.outsideDetect = Object.assign( {
+      border: 3,
+      inside: 5,
+      cursor: 9
+    }, constellation.outsideDetect );
 
     this.borderVertices = Object.assign( [], this.recalcPoints(points.border) );
     this.prepareVertices( this.borderVertices, {
@@ -31,7 +35,7 @@ Object.assign(OrionConstellation.prototype, {
       ampMax: amplitude.max * density,
       speedMin: speed.min,
       speedMax: speed.max,
-      force: ( force.border || 40 ) * density
+      force: ( force.inside || 40 ) * density
     } );
 
     this.cursorPoint = {
@@ -118,7 +122,6 @@ Object.assign(OrionConstellation.prototype, {
 
   createEdges: function() {
     this.edges = [];
-    this.cursorEdges = [];
 
     var i, j, l = this.vertices.length;
     for(i = 0; i < l; i++) {
@@ -148,8 +151,13 @@ Object.assign(OrionConstellation.prototype, {
           static: static
         };
 
+        var edgeType = 'inside';
+        if( v1.border || v2.border ) edgeType = 'border';
+        if( v1.cursor || v2.cursor ) edgeType = 'cursor';
+
+        edge.outsideDetect = ( this.outsideDetect[edgeType] || 0 ) + 1;
+
         this.edges.push(edge);
-        if( v1.cursor || v2.cursor ) this.cursorEdges.push(edge);
       }
     }
   },
@@ -174,30 +182,25 @@ Object.assign(OrionConstellation.prototype, {
     if( !this.onlyInside || !ctx ) return;
 
     this.cursorPoint.hidden = !ctx.isPointInPath(x, y);
-
-    this.checkCursorEdge(ctx);
   },
 
-  checkCursorEdge: function(ctx) {
-    var k = this.edgeTestPoints + 1;
+  edgeOutsideDetect: function(edge, ctx) {
+    var k = edge.outsideDetect;
+    if( k === 1 ) return;
 
-    for(var i = 0, l = this.cursorEdges.length; i < l; i++) {
-      var edge = this.cursorEdges[i];
+    var v1 = edge.v1.curr;
+    var v2 = edge.v2.curr;
 
-      var v1 = edge.v1.curr;
-      var v2 = edge.v2.curr;
+    var t = {
+      x: ( v2.x - v1.x ) / k,
+      y: ( v2.y - v1.y ) / k
+    };
 
-      var t = {
-        x: ( v2.x - v1.x ) / k,
-        y: ( v2.y - v1.y ) / k
-      };
-
-      for(var j = 1; j < k; j++) {
-        if( edge.hidden = !ctx.isPointInPath(
-          v1.x + ( j * t.x ),
-          v1.y + ( j * t.y )
-        ) ) break;
-      }
+    for(var j = 1; j < k; j++) {
+      if( edge.hidden = !ctx.isPointInPath(
+        v1.x + ( j * t.x ),
+        v1.y + ( j * t.y )
+      ) ) break;
     }
   },
 
@@ -221,10 +224,12 @@ Object.assign(OrionConstellation.prototype, {
       };
     }
 
-    this.checkCursorEdge(ctx);
-
     for(var i = 0, l = this.edges.length; i < l; i++) {
       var edge = this.edges[i];
+
+      if( this.onlyInside ) {
+        this.edgeOutsideDetect(edge, ctx);
+      }
 
       if( edge.hidden || edge.static ) continue;
 

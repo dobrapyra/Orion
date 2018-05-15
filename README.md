@@ -84,7 +84,11 @@ Example for all available parameters
       border: 0.5
     },
     onlyInside: true, // only inside mode for cursor point
-    edgeTestPoints: 7 // number of points to check that the edge is outside
+    outsideDetect: { // number of points to check that the edge is outside
+      border: 3,
+      inside: 5,
+      cursor: 9
+    }
   }
 });
 ```

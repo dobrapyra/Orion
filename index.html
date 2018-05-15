@@ -59,7 +59,7 @@
             inside: insidePoints
           },
           force: {
-            border: 60,
+            border: 50,
             inside: 40,
             cursor: 160
           },
@@ -79,7 +79,11 @@
             border: 0.5
           },
           onlyInside: true,
-          edgeTestPoints: 9
+          outsideDetect: {
+            border: 3,
+            inside: 5,
+            cursor: 9
+          }
         }
       });
     </script>
