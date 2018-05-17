@@ -207,10 +207,11 @@ Object.assign(OrionConstellation.prototype, {
     var density = this.density = props.density || 1;
 
     this.onlyInside = constellation.onlyInside || false;
+    this.quickDetect = constellation.quickDetect || 0.02;
     this.outsideDetect = Object.assign( {
-      border: 3,
-      inside: 5,
-      cursor: 9
+      border: 0,
+      inside: 1,
+      cursor: 3
     }, constellation.outsideDetect );
 
     this.borderVertices = Object.assign( [], this.recalcPoints(points.border) );
@@ -330,7 +331,7 @@ Object.assign(OrionConstellation.prototype, {
         // skip border edge in dynamic calculations
         if( v1.border && v2.border ) continue;
 
-        var static = v1.static && v2.static;
+        var static = !!( v1.static && v2.static );
         var force = v1.force + v2.force;
 
         var edge = {
@@ -349,8 +350,15 @@ Object.assign(OrionConstellation.prototype, {
         };
 
         var edgeType = 'inside';
-        if( v1.border || v2.border ) edgeType = 'border';
-        if( v1.cursor || v2.cursor ) edgeType = 'cursor';
+
+        if( v1.border || v2.border ) {
+          edge.quickDetect = true;
+          edgeType = 'border';
+        }
+
+        if( v1.cursor || v2.cursor ) {
+          edgeType = 'cursor';
+        }
 
         edge.outsideDetect = ( this.outsideDetect[edgeType] || 0 ) + 1;
 
@@ -376,7 +384,7 @@ Object.assign(OrionConstellation.prototype, {
       y: y
     };
 
-    if( !this.onlyInside || !ctx ) return;
+    if( !this.onlyInside ) return;
 
     this.cursorPoint.hidden = !ctx.isPointInPath(x, y);
   },
@@ -398,6 +406,28 @@ Object.assign(OrionConstellation.prototype, {
         v1.x + ( j * t.x ),
         v1.y + ( j * t.y )
       ) ) break;
+    }
+  },
+
+  edgeQuickDetect: function(edge, ctx) {
+    var v1 = edge.v1.curr;
+    var v2 = edge.v2.curr;
+
+    var t = {
+      x: ( v2.x - v1.x ) * this.quickDetect,
+      y: ( v2.y - v1.y ) * this.quickDetect
+    };
+
+    if( edge.v1.border ) {
+      edge.hidden = !ctx.isPointInPath(
+        v1.x + t.x,
+        v1.y + t.y
+      );
+    } else { // if edge.v1.border
+      edge.hidden = !ctx.isPointInPath(
+        v2.x - t.x,
+        v2.y - t.y
+      );
     }
   },
 
@@ -424,20 +454,29 @@ Object.assign(OrionConstellation.prototype, {
     for(var i = 0, l = this.edges.length; i < l; i++) {
       var edge = this.edges[i];
 
+      if( edge.static ) continue;
+
       if( this.onlyInside ) {
+        if( edge.quickDetect ) {
+          this.edgeQuickDetect(edge, ctx);
+          if( edge.hidden ) continue;
+        }
+
         this.edgeOutsideDetect(edge, ctx);
+        if( edge.hidden ) continue;
       }
 
-      if( edge.hidden || edge.static ) continue;
+      edge.hidden = !!( edge.v1.hidden || edge.v2.hidden );
+      if( edge.hidden ) continue;
 
-      var v1 = edge.v1;
-      var v2 = edge.v2;
+      var v1 = edge.v1.curr;
+      var v2 = edge.v2.curr;
 
       edge.lastA = edge.currA;
       edge.currA = 1 - Math.min(
         Math.sqrt(
-          Math.pow(v2.curr.x - v1.curr.x, 2) +
-          Math.pow(v2.curr.y - v1.curr.y, 2)
+          Math.pow(v2.x - v1.x, 2) +
+          Math.pow(v2.y - v1.y, 2)
         ) / edge.force,
         1
       );
