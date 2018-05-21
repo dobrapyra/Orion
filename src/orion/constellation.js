@@ -267,6 +267,20 @@ Object.assign(OrionConstellation.prototype, {
 
       if( edge.static ) continue;
 
+      edge.hidden = !!( edge.v1.hidden || edge.v2.hidden );
+      if( edge.hidden ) continue;
+
+      var v1 = edge.v1.curr;
+      var v2 = edge.v2.curr;
+
+      var d = {
+        x: Math.abs( v2.x - v1.x ),
+        y: Math.abs( v2.y - v1.y )
+      };
+
+      edge.hidden = !!( d.x > edge.force || d.y > edge.force );
+      if( edge.hidden ) continue;
+
       if( this.onlyInside ) {
         if( edge.quickDetect ) {
           this.edgeQuickDetect(edge, ctx);
@@ -277,18 +291,9 @@ Object.assign(OrionConstellation.prototype, {
         if( edge.hidden ) continue;
       }
 
-      edge.hidden = !!( edge.v1.hidden || edge.v2.hidden );
-      if( edge.hidden ) continue;
-
-      var v1 = edge.v1.curr;
-      var v2 = edge.v2.curr;
-
       edge.lastA = edge.currA;
       edge.currA = 1 - Math.min(
-        Math.sqrt(
-          Math.pow(v2.x - v1.x, 2) +
-          Math.pow(v2.y - v1.y, 2)
-        ) / edge.force,
+        Math.sqrt( d.x * d.x + d.y * d.y ) / edge.force,
         1
       );
     }
