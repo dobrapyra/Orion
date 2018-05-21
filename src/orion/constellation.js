@@ -161,7 +161,9 @@ Object.assign(OrionConstellation.prototype, {
         var edgeType = 'inside';
 
         if( v1.border || v2.border ) {
-          edge.quickDetect = true;
+          if( this.quickDetect > 0 ) {
+            edge.quickDetect = true;
+          }
           edgeType = 'border';
         }
 
