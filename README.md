@@ -89,12 +89,6 @@ Example for all available parameters
       border: 0.5
     },
     onlyInside: true, // only inside mode for cursor point
-    quickDetect: 0.02, // quick border edge outside detection distance
-    outsideDetect: { // number of points to check that the edge is outside
-      border: 0,
-      inside: 1,
-      cursor: 3
-    }
   }
 });
 ```
