@@ -34,12 +34,6 @@ Object.assign(Orion.prototype, {
       density: density
     } );
 
-    if( props.constellation.onlyInside ) {
-      this.offScreenCanvas = this.createOffscreenCanvas();
-      this.offscreenCtx = this.offScreenCanvas.getContext('2d');
-      this.constellation.setOutsideDetector( this.offscreenCtx );
-    }
-
     this.bindEvents();
     this.loop.start();
   },
@@ -54,10 +48,6 @@ Object.assign(Orion.prototype, {
 
     this.viewport.appendChild(canvas);
     return canvas;
-  },
-
-  createOffscreenCanvas: function() {
-    return document.createElement('canvas');
   },
 
   refresh: function() {
@@ -85,7 +75,7 @@ Object.assign(Orion.prototype, {
   onMouseMove: function(e) {
     var x = ( e.pageX - this.offset.left - this.scroll.left ) / this.scale;
     var y = ( e.pageY - this.offset.top - this.scroll.top ) / this.scale;
-    this.constellation.setCursor(x, y, this.offscreenCtx);
+    this.constellation.setCursor(x, y);
   },
 
   callRefresh: function(e) {
@@ -108,7 +98,7 @@ Object.assign(Orion.prototype, {
   // },
 
   update: function(delta) {
-    this.constellation.update(delta, this.offscreenCtx);
+    this.constellation.update(delta);
   },
 
   render: function(interp, fps) {

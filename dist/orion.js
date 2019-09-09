@@ -207,12 +207,6 @@ Object.assign(OrionConstellation.prototype, {
     var density = this.density = props.density || 1;
 
     this.onlyInside = constellation.onlyInside || false;
-    this.quickDetect = constellation.quickDetect || 0.02;
-    this.outsideDetect = Object.assign( {
-      border: 0,
-      inside: 1,
-      cursor: 3
-    }, constellation.outsideDetect );
 
     this.borderVertices = Object.assign( [], this.recalcPoints(points.border) );
     this.prepareVertices( this.borderVertices, {
@@ -362,25 +356,12 @@ Object.assign(OrionConstellation.prototype, {
           edgeType = 'cursor';
         }
 
-        edge.outsideDetect = ( this.outsideDetect[edgeType] || 0 ) + 1;
-
         this.edges.push(edge);
       }
     }
   },
 
-  setOutsideDetector: function(ctx) {
-    var firstBorderVertex = this.borderVertices[0];
-    ctx.beginPath();
-    ctx.moveTo(firstBorderVertex.x, firstBorderVertex.y);
-    for(var i = 0, l = this.borderVertices.length; i < l; i++) {
-      var v = this.borderVertices[i];
-      ctx.lineTo(v.x, v.y);
-    }
-    ctx.closePath();
-  },
-
-  setCursor: function(x, y, ctx) {
+  setCursor: function(x, y) {
     this.cursorPoint.curr = {
       x: x,
       y: y
@@ -388,52 +369,83 @@ Object.assign(OrionConstellation.prototype, {
 
     if( !this.onlyInside ) return;
 
-    this.cursorPoint.hidden = !ctx.isPointInPath(x, y);
+    this.cursorPoint.hidden = this.cursorOutsideDetect(x, y);
   },
 
-  edgeOutsideDetect: function(edge, ctx) {
-    var k = edge.outsideDetect;
-    if( k === 1 ) return;
+  intersection: function(ax, ay, bx, by, cx, cy, dx, dy) { // based on http://jsfiddle.net/justin_c_rounds/Gd2S2/light/
+    var s, t,
+      ab_x = bx - ax, ab_y = by - ay,
+      cd_x = dx - cx, cd_y = dy - cy,
+      ca_x, ca_y,
+      denominator = (cd_y * ab_x) - (cd_x * ab_y)
+      // result = {
+      //   // point: null,
+      //   intersect: false
+      // }
+    ;
 
+    if (denominator === 0) { // parallel
+      // return result;
+      return false;
+    }
+
+    ca_x = ax - cx;
+    ca_y = ay - cy;
+    s = ((cd_x * ca_y) - (cd_y * ca_x)) / denominator;
+    t = ((ab_x * ca_y) - (ab_y * ca_x)) / denominator;
+
+    // result.point = new Vector(
+    //   ax + (s * (bx - ax)),
+    //   ay + (s * (by - ay))
+    // );
+
+    if ( (s > 0 && s < 1) && (t > 0 && t < 1) ) { // onLine1 && onLine2
+      return true;
+      // result.intersect = true;
+
+      // result.point = new Vector(
+      //   ax + (s * (bx - ax)),
+      //   ay + (s * (by - ay))
+      // );
+    }
+
+    // return result;
+    return false;
+  },
+
+  cursorOutsideDetect: function(x, y) {
+    var bv1, bv2;
+
+    inter = 0;
+    for( j = 0, k = this.borderVertices.length; j < k; j++ ) {
+      bv1 = j === 0 ? this.borderVertices[k - 1] : this.borderVertices[j - 1];
+      bv2 = this.borderVertices[j];
+
+      if( this.intersection( bv1.x, bv1.y, bv2.x, bv2.y, -1, -1, x, y ) ) inter++;
+    }
+
+    return (inter % 2 === 0);
+  },
+
+  edgeOutsideDetect: function(edge) {
     var v1 = edge.v1.curr;
     var v2 = edge.v2.curr;
 
-    var t = {
-      x: ( v2.x - v1.x ) / k,
-      y: ( v2.y - v1.y ) / k
-    };
+    var bv1, bv2;
 
-    for(var j = 1; j < k; j++) {
-      if( edge.hidden = !ctx.isPointInPath(
-        v1.x + ( j * t.x ),
-        v1.y + ( j * t.y )
-      ) ) break;
+    inter = 0;
+    for( j = 0, k = this.borderVertices.length; j < k; j++ ) {
+      bv1 = j === 0 ? this.borderVertices[k - 1] : this.borderVertices[j - 1];
+      bv2 = this.borderVertices[j];
+
+      if( this.intersection( bv1.x, bv1.y, bv2.x, bv2.y, v1.x, v1.y, v2.x, v2.y ) ) {
+        edge.hidden = true;
+        return;
+      }
     }
   },
 
-  edgeQuickDetect: function(edge, ctx) {
-    var v1 = edge.v1.curr;
-    var v2 = edge.v2.curr;
-
-    var t = {
-      x: ( v2.x - v1.x ) * this.quickDetect,
-      y: ( v2.y - v1.y ) * this.quickDetect
-    };
-
-    if( edge.v1.border ) {
-      edge.hidden = !ctx.isPointInPath(
-        v1.x + t.x,
-        v1.y + t.y
-      );
-    } else { // if edge.v1.border
-      edge.hidden = !ctx.isPointInPath(
-        v2.x - t.x,
-        v2.y - t.y
-      );
-    }
-  },
-
-  update: function(delta, ctx) {
+  update: function(delta) {
     for(var i = 0, l = this.vertices.length; i < l; i++) {
       var v = this.vertices[i];
 
@@ -473,12 +485,7 @@ Object.assign(OrionConstellation.prototype, {
       if( edge.hidden ) continue;
 
       if( this.onlyInside ) {
-        if( edge.quickDetect ) {
-          this.edgeQuickDetect(edge, ctx);
-          if( edge.hidden ) continue;
-        }
-
-        this.edgeOutsideDetect(edge, ctx);
+        this.edgeOutsideDetect(edge);
         if( edge.hidden ) continue;
       }
 
@@ -615,12 +622,6 @@ Object.assign(Orion.prototype, {
       density: density
     } );
 
-    if( props.constellation.onlyInside ) {
-      this.offScreenCanvas = this.createOffscreenCanvas();
-      this.offscreenCtx = this.offScreenCanvas.getContext('2d');
-      this.constellation.setOutsideDetector( this.offscreenCtx );
-    }
-
     this.bindEvents();
     this.loop.start();
   },
@@ -635,10 +636,6 @@ Object.assign(Orion.prototype, {
 
     this.viewport.appendChild(canvas);
     return canvas;
-  },
-
-  createOffscreenCanvas: function() {
-    return document.createElement('canvas');
   },
 
   refresh: function() {
@@ -666,7 +663,7 @@ Object.assign(Orion.prototype, {
   onMouseMove: function(e) {
     var x = ( e.pageX - this.offset.left - this.scroll.left ) / this.scale;
     var y = ( e.pageY - this.offset.top - this.scroll.top ) / this.scale;
-    this.constellation.setCursor(x, y, this.offscreenCtx);
+    this.constellation.setCursor(x, y);
   },
 
   callRefresh: function(e) {
@@ -689,7 +686,7 @@ Object.assign(Orion.prototype, {
   // },
 
   update: function(delta) {
-    this.constellation.update(delta, this.offscreenCtx);
+    this.constellation.update(delta);
   },
 
   render: function(interp, fps) {
